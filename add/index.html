@@ -295,6 +295,53 @@ details.pfold[open] > summary { margin-bottom: 8px; }
 .sysmap .fe-only { display: none; }
 .sysmap svg.fe .fe-only { display: inline; }
 .sysmap svg.noai .ai { display: none; }
+/* meeting agenda */
+.agtop { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.agbtn { border: 2px solid var(--ink); background: var(--paper); color: var(--ink); font-weight: 700; font-size: calc(14px * var(--s)); padding: 8px 14px; border-radius: 8px; cursor: pointer; }
+.agbtn:hover { background: var(--accent-soft); }
+.agbtn.pri { background: var(--accent); border-color: var(--accent); color: var(--paper); }
+.agbtn.pri:hover { filter: brightness(1.08); }
+.agbtn.dng { border-color: var(--warm); color: var(--warm); }
+.agbtn.sm { padding: 3px 10px; font-size: calc(13px * var(--s)); border-width: 1.5px; }
+.agi { border: 1.5px solid var(--muted); background: var(--paper); color: var(--ink); border-radius: 6px; padding: 2px 8px; font-size: calc(13px * var(--s)); font-weight: 600; cursor: pointer; white-space: nowrap; }
+.agi:hover:not(:disabled) { border-color: var(--ink); background: var(--accent-soft); }
+.agi:disabled { opacity: .35; cursor: default; }
+.agb { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.agh { width: 100%; display: flex; gap: 10px; align-items: center; background: none; border: 0; padding: 14px 16px; color: var(--ink); font: inherit; font-weight: 700; font-size: calc(17px * var(--s)); text-align: left; cursor: pointer; }
+.agh:hover { background: var(--ground); }
+.agcv { display: inline-block; width: 1.1em; color: var(--muted); flex: none; }
+.agbody { padding: 0 16px 14px; display: grid; }
+.agr { display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; padding: 8px 0; border-top: 1px solid var(--line); }
+.agl { flex: 0 0 130px; font-size: calc(13px * var(--s)); font-weight: 700; color: var(--muted); padding-top: 7px; }
+.agr > .aglabin { flex: 0 0 130px; width: 130px; font-weight: 700; color: var(--muted); font-size: calc(13px * var(--s)); }
+.agcell { flex: 1 1 200px; min-width: 0; border: 0; border-bottom: 1.5px solid transparent; background: transparent; color: var(--ink); font: inherit; resize: none; padding: 5px 4px; line-height: 1.4; border-radius: 0; overflow: hidden; }
+.agcell:hover { background: var(--ground); }
+.agcell:focus { outline: none; border-bottom-color: var(--accent); background: var(--ground); }
+.agdim { opacity: .5; }
+.aglk { color: var(--accent); background: var(--accent-soft); border-radius: 999px; padding: 3px 11px; font-size: calc(13px * var(--s)); font-weight: 600; text-decoration: none; white-space: nowrap; }
+.aglkwrap { display: inline-flex; gap: 4px; align-items: center; }
+.aglinkin { width: 180px; font-size: calc(14px * var(--s)); padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--ground); color: var(--ink); }
+.agchips { display: flex; flex-wrap: wrap; gap: 6px; }
+.agchip { border: 1.5px solid var(--muted); background: var(--paper); color: var(--ink); border-radius: 999px; padding: 4px 13px; font: inherit; font-size: calc(14px * var(--s)); cursor: pointer; }
+.agchip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--paper); font-weight: 600; }
+.agchip.warm[aria-pressed="true"] { background: var(--warm); border-color: var(--warm); }
+.agfold { display: inline-flex; gap: 6px; align-items: center; background: none; border: 0; color: var(--ink); font: inherit; cursor: pointer; padding: 4px 0; text-align: left; }
+.agtasks { padding: 8px 0; border-top: 1px dashed var(--line); display: grid; gap: 4px; }
+.agtaskbox { margin-left: 22px; border-top: 1px dashed var(--line); padding: 6px 0; display: grid; gap: 6px; }
+.agtask { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+.agtasktext { flex: 1 1 200px; }
+.agtag { background: var(--warm-soft); color: var(--warm); font-size: calc(12px * var(--s)); font-weight: 700; padding: 2px 9px; border-radius: 999px; }
+.agnote { width: 100%; font: inherit; font-size: calc(14px * var(--s)); padding: 8px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--ground); color: var(--ink); }
+.agask { border: 1.5px solid var(--accent); background: var(--accent-soft); border-radius: 10px; padding: 10px 12px; margin: 8px 0; display: grid; gap: 8px; }
+.agaskhead { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.agaskhead .agfold { flex: 1 1 160px; }
+.agaskbody { display: grid; gap: 4px; padding-left: 22px; }
+.agform .field textarea, .agform .field select, .agform .field input { width: 100%; font-size: calc(15px * var(--s)); padding: 9px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--paper); color: var(--ink); }
+.agbtns { display: flex; gap: 10px; flex-wrap: wrap; padding-top: 12px; border-top: 1px solid var(--line); }
+.agask .agbtns { border-top: 0; padding-top: 4px; }
+.agdone { background: var(--done-soft); color: var(--done); border-radius: 10px; padding: 12px 16px; font-weight: 600; }
+.agdone a { color: inherit; }
+@media (max-width: 520px) { .agl, .agr > .aglabin { flex-basis: 100%; padding-top: 0; } }
 </style>
 </head>
 <body>
@@ -443,6 +490,7 @@ const ICONS = {
   sun: '<circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"/>',
   moon: '<path d="M20 14.5A8 8 0 0 1 9.5 4a8 8 0 1 0 10.5 10.5z"/>',
   qr: '<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><path d="M14 14h3v3h-3zM20 14v.01M14 20h3M20 17v4"/>',
+  calendar: '<rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/>',
   home: '<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>',
   plus: '<circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/>',
   sort: '<path d="M8 4v16M4 16l4 4 4-4M16 20V4M12 8l4-4 4 4"/>',
@@ -496,14 +544,15 @@ function setLabelMode(m) {
 const SIZES = [0.9, 1, 1.15, 1.3, 1.5, 1.75];
 const prefs = { theme: "", size: 1 };
 try { prefs.theme = localStorage.getItem(PFX + "Theme") || ""; prefs.size = parseFloat(localStorage.getItem(PFX + "Size")) || 1; } catch (e) {}
-function isDark() { return prefs.theme ? prefs.theme === "dark" : window.matchMedia("(prefers-color-scheme: dark)").matches; }
+function isDark() { return prefs.theme ? prefs.theme === "dark" : (VIEW === 'agenda' ? false : window.matchMedia("(prefers-color-scheme: dark)").matches); }
 function applyPrefs() {
   const root = document.documentElement;
-  if (prefs.theme) root.setAttribute("data-theme", prefs.theme); else root.removeAttribute("data-theme");
+  const th = prefs.theme || (VIEW === 'agenda' ? 'light' : '');
+  if (th) root.setAttribute("data-theme", th); else root.removeAttribute("data-theme");
   root.style.colorScheme = isDark() ? "dark" : "light";
   root.style.setProperty("--s", prefs.size);
   try { localStorage.setItem(PFX + "Theme", prefs.theme); localStorage.setItem(PFX + "Size", prefs.size); } catch (e) {}
-  drawTools();
+  if (document.getElementById("tools")) drawTools();
 }
 function stepSize(d) {
   let i = SIZES.findIndex(s => Math.abs(s - prefs.size) < 0.01); if (i < 0) i = 1;
@@ -646,7 +695,7 @@ function deckView(cards) {
 /* ------------------------------------------------ member pages */
 
 function loadBriefing() { call('getBriefing', [getMe()], d => { data = d; renderMember(); }); }
-function renderMember() { if (VIEW === 'add' && getMe()) renderAdd(); else renderBriefing(); }
+function renderMember() { applyPrefs(); if (VIEW === 'agenda' && getMe() && CFG.agenda !== false) renderAgendaPage(); else if (VIEW === 'add' && getMe()) renderAdd(); else renderBriefing(); }
 
 function namePicker() {
   return [
@@ -661,6 +710,7 @@ function navBar() {
   return el('nav', { class: 'nav', 'aria-label': 'Pages' }, [
     el('button', { type: 'button', 'aria-label': t('nav_asks') || 'My asks', title: t('nav_asks') || 'My asks', 'aria-current': VIEW === 'my' ? 'page' : false, onclick: () => { VIEW = 'my'; renderMember(); } }, [L('home', tw('nav_asks', 'My asks'))]),
     el('button', { type: 'button', 'aria-label': t('nav_add') || 'Add asks', title: t('nav_add') || 'Add asks', 'aria-current': VIEW === 'add' ? 'page' : false, onclick: () => { VIEW = 'add'; renderMember(); } }, [L('plus', tw('nav_add', 'Add asks'))]),
+    CFG.agenda !== false ? el('button', { type: 'button', 'aria-label': t('nav_agenda') || 'Agenda', title: t('nav_agenda') || 'Agenda', 'aria-current': VIEW === 'agenda' ? 'page' : false, onclick: () => { VIEW = 'agenda'; renderMember(); } }, [L('calendar', tw('nav_agenda', 'Agenda'))]) : '',
   ]);
 }
 
@@ -1196,6 +1246,7 @@ function briefSection() {
 function renderPm() {
   const d = data;
   const kids = [el('header', {}, [el('div', { class: 'eyebrow', text: ORG + ' · project-manager view' + (d.me ? ' · ' + d.me : '') }), el('h1', {}, ['Where things ', el('em', { text: 'stand' })])])];
+  if (CFG.agenda !== false) kids.push(el('section', { class: 'inline' }, [el('a', { class: 'btn', href: agendaUrl(), text: 'Meeting agenda' })]));
   kids.push(el('div', { class: 'stats' }, [['Done', d.stats.done], ['In progress', d.stats.team], [t('pm_cant_stat'), d.stats.cant], ['With you to check', d.stats.query], ['No answer yet', d.stats.open]]
     .map(([l, n]) => el('div', { class: 'stat' }, [el('b', { text: String(n) }), el('span', { text: l })]))));
   kids.push(el('div', { class: 'stack' }, [
@@ -1206,6 +1257,15 @@ function renderPm() {
         return sel; })()]),
   ]));
 
+  if (d.held && d.held.length) {
+    const hc = el('section', { class: 'card' }, [el('h2', { text: 'Held back from the meeting (' + d.held.length + ')' }), el('p', { class: 'small', style: 'margin:0', text: 'Notes written on open tasks. If a note means an ask should change, edit the ask below, then tick Checked.' })]);
+    d.held.forEach(x => {
+      const b = el('button', { class: 'btn ghost', type: 'button', text: 'Checked' });
+      b.addEventListener('click', () => { if (busy) return; b.disabled = true; call('pmClearNote', [PM_KEY, x.id], r => { data = r; renderPm(); }, e => { b.disabled = false; fail(e); }); });
+      hc.append(el('div', { class: 'q' }, [el('div', { class: 'small', text: x.meeting + ' meeting · note by ' + x.by + ' · ask for ' + x.forText }), el('div', { text: x.ask }), el('div', { class: 'check', text: x.note }), el('div', { class: 'inline' }, [b])]));
+    });
+    kids.push(hc);
+  }
   if (d.queries.length) {
     const qc = el('section', { class: 'card' }, [el('h2', { text: '“Not for me?” to check (' + d.queries.length + ')' })]);
     d.queries.forEach(x => {
@@ -1348,6 +1408,344 @@ function renderPm() {
   updateBatch();
 }
 
+/* ------------------------------------------------ meeting agenda (optional/Agenda.gs) */
+let ag = null, agPoll = null, agPreview = false, agPubArmed = false, agResult = null, agVer = 0, agFocus = '';
+const agDirty = {}, agDirtyN = {}, agTO = {}, agGone = {}, agAskOpen = {}, agMin = {}, agTasks = {}, agNoteOpen = {}, agBackup = {}, agLinkEd = {};
+let agCol = {};
+try { agCol = JSON.parse(localStorage.getItem(PFX + 'AgCol') || '{}') || {}; } catch (e) {}
+
+/** A call that shows no loading pill: used for autosave and refresh. */
+function qcall(fn, args, ok, bad) {
+  const good = r => { if (ok) ok(r); };
+  const oops = e => { if (bad) bad(e); else toast((e && e.message) || 'Could not save. Check your connection.'); };
+  if (!API) { google.script.run.withSuccessHandler(good).withFailureHandler(oops)[fn].apply(null, args || []); return; }
+  fetch(API, { method: 'POST', headers: { 'Content-Type': 'text/plain;charset=utf-8' }, body: JSON.stringify({ fn: fn, args: args || [] }) })
+    .then(r => r.json())
+    .then(res => { if (!res || res.ok !== true) throw new Error((res && res.error) || 'Something went wrong.'); good(res.result); })
+    .catch(oops);
+}
+// Edits go to the server one at a time, in order, so "add" always lands before the "set" that follows it.
+const agQ = [];
+let agRun = false;
+const agBusy = () => agRun || agQ.length > 0 || Object.keys(agTO).length > 0;
+function agStatus() { const n = document.getElementById('ag-save'); if (n) n.textContent = agBusy() ? 'Saving…' : 'All saved'; }
+function agOp(op, ok, bad) { agQ.push([op, ok, bad]); agStatus(); agPump(); }
+function agPump() {
+  if (agRun || !agQ.length) return;
+  agRun = true;
+  const job = agQ.shift();
+  const next = () => { agRun = false; agStatus(); agPump(); };
+  qcall('agendaOp', [getMe(), PM_KEY, job[0]], r => { if (job[1]) job[1](r); next(); }, e => { if (job[2]) job[2](e); else toast((e && e.message) || 'Could not save.'); next(); });
+}
+const agItem = id => ag && ag.items ? ag.items.find(x => x.id === id) : null;
+const agRO = () => ag.state === 'published';
+const agIsPm = () => ag.pm && !agPreview;
+const agBlocksList = () => ['open', 'proj'].concat(ag.groups, ['park']);
+const agBlockName = id => id === 'open' ? 'Opening' : id === 'proj' ? 'Project update' : id === 'park' ? 'Doesn’t have a place yet' : id;
+function agShort(u) { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return String(u).slice(0, 24); } }
+function agNewId() { const b = new Uint8Array(4); (window.crypto || {}).getRandomValues ? crypto.getRandomValues(b) : b.forEach((_, i) => { b[i] = Math.floor(Math.random() * 256); }); return 'G' + Array.from(b).map(x => x.toString(16).padStart(2, '0')).join(''); }
+function agWhereFor(block, cur) {
+  if (ag.groups.indexOf(block) >= 0) return block;
+  if (block === 'proj') return cur && ag.workstreams.indexOf(cur) >= 0 && ag.groups.indexOf(cur) < 0 ? cur : 'Not sure';
+  return 'Not sure';
+}
+
+/** Change one field of one row: shown at once, saved shortly after you stop typing. */
+function agEdit(id, field, value, now) {
+  const it = agItem(id);
+  if (!it) return;
+  it[field] = value;
+  const v = ++agVer;
+  (agDirty[id] = agDirty[id] || {})[field] = v;
+  const key = id + field;
+  clearTimeout(agTO[key]);
+  const clear = () => { if (agDirty[id] && agDirty[id][field] === v) delete agDirty[id][field]; };
+  const send = () => {
+    delete agTO[key];
+    const f = {}; f[field] = (agItem(id) || {})[field];
+    agOp({ t: 'set', id: id, f: f }, clear, e => { clear(); toast((e && e.message) || 'Could not save that.'); });
+  };
+  if (now) send(); else { agTO[key] = setTimeout(send, 700); agStatus(); }
+}
+function agNoteEdit(askId, text) {
+  ag.notes[askId] = text;
+  const bar = document.getElementById('ag-bar'); if (bar) bar.textContent = agBarText();
+  const v = ++agVer;
+  agDirtyN[askId] = v;
+  const key = 'n' + askId;
+  clearTimeout(agTO[key]);
+  const clear = () => { if (agDirtyN[askId] === v) delete agDirtyN[askId]; };
+  agTO[key] = setTimeout(() => { delete agTO[key]; agOp({ t: 'note', askId: askId, text: ag.notes[askId] || '' }, clear, clear); }, 700);
+  agStatus();
+}
+function agAdd(block, kind) {
+  const id = agNewId();
+  const it = { id: id, block: block, kind: kind, text: '', link: '', label: kind === 'line' ? 'New line' : '', hidden: false, from: ag.me, to: '', where: kind === 'ask' ? agWhereFor(block, '') : '', by: '', askKind: 'task', ready: false, _new: true };
+  ag.items.push(it);
+  if (kind === 'ask') agAskOpen[id] = true;
+  agFocus = (kind === 'ask' ? 'ag-a-' : 'ag-t-') + id;
+  renderAgenda();
+  agOp({ t: 'add', id: id, block: block, kind: kind }, () => { it._new = false; }, e => { ag.items = ag.items.filter(x => x.id !== id); renderAgenda(); toast((e && e.message) || 'Could not add that.'); });
+}
+function agDel(id) {
+  agGone[id] = true;
+  ag.items = ag.items.filter(x => x.id !== id);
+  agOp({ t: 'del', id: id });
+  renderAgenda();
+}
+function agMove(id, dir) {
+  const it = agItem(id);
+  if (!it) return;
+  const L = agBlocksList(), i = L.indexOf(it.block) + dir;
+  if (i < 0 || i >= L.length) return;
+  it.block = L[i];
+  if (it.kind === 'ask') it.where = agWhereFor(it.block, it.where);
+  agOp({ t: 'move', id: id, block: it.block });
+  renderAgenda();
+}
+function agToggle(kind, name) {
+  const on = ag[kind].indexOf(name) < 0, other = kind === 'present' ? 'apol' : 'present';
+  ag[kind] = ag[kind].filter(x => x !== name);
+  if (on) { ag[kind].push(name); ag[other] = ag[other].filter(x => x !== name); }
+  agOp({ t: 'meta', f: kind, v: name, on: on });
+  renderAgenda();
+}
+function agSetState(v) { ag.state = v; agPubArmed = false; agResult = null; agOp({ t: 'state', v: v }); renderAgenda(); }
+
+/* ---- small pieces */
+function agBtn(text, onclick, cls, extra) { return el('button', Object.assign({ type: 'button', class: 'agbtn' + (cls ? ' ' + cls : ''), text: text, onclick: onclick }, extra || {})); }
+function agMini(text, label, onclick, disabled) { return el('button', { type: 'button', class: 'agi', 'aria-label': label, title: label, text: text, disabled: disabled || false, onclick: onclick }); }
+function agArrows(it) {
+  const L = agBlocksList(), i = L.indexOf(it.block);
+  return [agMini('▲', 'Move up a section', () => agMove(it.id, -1), i <= 0), agMini('▼', 'Move down a section', () => agMove(it.id, 1), i >= L.length - 1)];
+}
+function agLinkCtl(it) {
+  if (agRO()) return it.link ? el('a', { class: 'aglk', href: it.link, target: '_blank', rel: 'noopener', text: agShort(it.link) + ' ↗' }) : '';
+  if (agLinkEd[it.id]) {
+    const inp = el('input', { type: 'url', class: 'aglinkin', placeholder: 'https://…', 'aria-label': 'Link', value: it.link });
+    inp.addEventListener('input', () => agEdit(it.id, 'link', inp.value));
+    inp.addEventListener('keydown', ev => { if (ev.key === 'Enter') { agEdit(it.id, 'link', inp.value, true); agLinkEd[it.id] = false; renderAgenda(); } });
+    setTimeout(() => inp.focus(), 0);
+    return inp;
+  }
+  if (it.link) return el('span', { class: 'aglkwrap' }, [el('a', { class: 'aglk', href: it.link, target: '_blank', rel: 'noopener', text: agShort(it.link) + ' ↗' }), agMini('✎', 'Change the link', () => { agLinkEd[it.id] = true; renderAgenda(); })]);
+  return agMini('+ link', 'Add a link', () => { agLinkEd[it.id] = true; renderAgenda(); });
+}
+function agCell(it, field, id, placeholder) {
+  const ta = el('textarea', { class: 'agcell', id: id, rows: '1', placeholder: placeholder, 'aria-label': placeholder, readonly: agRO() });
+  ta.value = it[field] || '';
+  const grow = () => { ta.style.height = 'auto'; ta.style.height = ta.scrollHeight + 'px'; };
+  ta.addEventListener('input', () => { grow(); agEdit(it.id, field, ta.value); });
+  setTimeout(grow, 0);
+  return ta;
+}
+function agItemRow(it) {
+  return el('div', { class: 'agr' }, [agCell(it, 'text', 'ag-t-' + it.id, 'Type anything…'), agLinkCtl(it)].concat(agRO() ? [] : agArrows(it).concat([agMini('×', 'Delete this item', () => agDel(it.id))])));
+}
+function agLineRow(it) {
+  const pm = agIsPm() && !agRO();
+  const lab = pm ? el('input', { class: 'agcell aglabin', value: it.label, 'aria-label': 'Line name', oninput: ev => agEdit(it.id, 'label', ev.target.value) }) : el('span', { class: 'agl', text: it.label });
+  return el('div', { class: 'agr' + (it.hidden ? ' agdim' : '') }, [lab, agCell(it, 'text', 'ag-t-' + it.id, 'Nothing to report'), agLinkCtl(it)]
+    .concat(pm ? [agBtn(it.hidden ? 'Show' : 'Hide', () => { agEdit(it.id, 'hidden', !it.hidden, true); renderAgenda(); }, 'sm'), agMini('×', 'Remove this line', () => agDel(it.id))] : []));
+}
+
+/* ---- tasks that come from the tracker (read-only) with notes */
+function agTasksRow(block, label) {
+  const ts = ag.tasks.filter(t => t.block === block);
+  if (!ts.length) return '';
+  const open = !!agTasks[block];
+  const rows = [el('button', { type: 'button', class: 'agfold', 'aria-expanded': String(open), onclick: () => { agTasks[block] = !open; renderAgenda(); } },
+    [el('span', { class: 'agcv', text: open ? '▾' : '▸' }), el('b', { text: label }), el('span', { class: 'small', text: ' · ' + ts.length + ' · from the tracker, read-only' })])];
+  if (open) ts.forEach(t => {
+    const note = ag.notes[t.id] || '', showNote = agNoteOpen[t.id] || !!note;
+    const kids = [el('div', { class: 'agtask' }, [el('span', { class: 'agtasktext' }, [t.text + ' ', el('span', { class: 'small', text: '· ' + t.who })]), note ? el('span', { class: 'agtag', text: 'note held for PM' }) : '',
+      agRO() ? '' : agBtn(showNote ? 'Hide note' : 'Add note', () => { agNoteOpen[t.id] = !showNote; renderAgenda(); }, 'sm')])];
+    if (showNote) {
+      const ta = el('textarea', { class: 'agnote', rows: '2', placeholder: 'A note for the PM. It stays here until the meeting is published.', 'aria-label': 'Note on ' + t.text, readonly: agRO() });
+      ta.value = note;
+      ta.addEventListener('input', () => agNoteEdit(t.id, ta.value));
+      kids.push(ta);
+    }
+    rows.push(el('div', { class: 'agtaskbox' }, kids));
+  });
+  return el('div', { class: 'agtasks' }, rows);
+}
+
+/* ---- asks */
+function agAskCard(it) {
+  const min = !!agMin[it.id];
+  const head = el('div', { class: 'agaskhead' }, [
+    el('button', { type: 'button', class: 'agfold', 'aria-expanded': String(!min), onclick: () => { agMin[it.id] = !min; renderAgenda(); } },
+      [el('span', { class: 'agcv', text: min ? '▸' : '▾' }), el('b', { text: it.askKind === 'ask' ? 'Ask' : 'Task' }), el('span', { class: 'small', text: ' · to ' + it.to + ' · ' + it.where })]),
+  ].concat(agRO() ? [] : agArrows(it).concat([agBtn('Edit', () => {
+    agBackup[it.id] = { text: it.text, to: it.to, where: it.where, by: it.by, link: it.link, from: it.from, kind: it.askKind };
+    agAskOpen[it.id] = true; renderAgenda();
+  }, 'sm'), agBtn('Delete', () => agDel(it.id), 'sm dng')])));
+  return el('div', { class: 'agask' }, [head, min ? '' : el('div', { class: 'agaskbody' }, [
+    el('div', { text: it.text }),
+    el('div', { class: 'small', text: (it.from ? 'from ' + (ag.people.find(p => p.name === it.from) || { display: it.from }).display : '') + (it.by ? ' · by ' + it.by : '') }),
+    it.link ? agLinkCtl(it) : '',
+  ])]);
+}
+function agAskForm(it) {
+  const fld = (label, node) => el('div', { class: 'field' }, [el('span', { class: 'lab', text: label }), node]);
+  const from = el('select', { 'aria-label': 'From' }, ag.people.map(p => el('option', { value: p.name, text: p.display })));
+  from.value = it.from;
+  from.addEventListener('change', () => agEdit(it.id, 'from', from.value, true));
+  const bT = el('button', { type: 'button', text: 'Task', 'aria-pressed': it.askKind === 'task' ? 'true' : 'false' });
+  const bA = el('button', { type: 'button', text: 'Ask', 'aria-pressed': it.askKind === 'ask' ? 'true' : 'false' });
+  const help = el('span', { class: 'small', text: it.askKind === 'task' ? 'A task is for everyone listed.' : 'An ask is an invitation: some of those listed, until it is enough.' });
+  const setKind = k => { agEdit(it.id, 'askKind', k, true); bT.setAttribute('aria-pressed', k === 'task' ? 'true' : 'false'); bA.setAttribute('aria-pressed', k === 'ask' ? 'true' : 'false'); help.textContent = k === 'task' ? 'A task is for everyone listed.' : 'An ask is an invitation: some of those listed, until it is enough.'; };
+  bT.addEventListener('click', () => setKind('task'));
+  bA.addEventListener('click', () => setKind('ask'));
+  const owners = ownerPicker('ag' + it.id, it.to, ag.names, list => { const v = list.join(', '); if (v !== ((agItem(it.id) || {}).to || '')) agEdit(it.id, 'to', v, true); });
+  const text = el('textarea', { id: 'ag-a-' + it.id, rows: '2', placeholder: 'What needs to happen?', 'aria-label': 'The ask' });
+  text.value = it.text;
+  text.addEventListener('input', () => agEdit(it.id, 'text', text.value));
+  const where = el('select', { 'aria-label': 'Where it lives' }, ag.workstreams.map(w => el('option', { value: w, text: w })).concat([el('option', { value: 'Not sure', text: 'Not sure' })]));
+  where.value = it.where;
+  where.addEventListener('change', () => agEdit(it.id, 'where', where.value, true));
+  const by = el('input', { type: 'date', 'aria-label': 'By when' });
+  by.value = it.by;
+  by.addEventListener('input', () => agEdit(it.id, 'by', by.value, true));
+  const link = el('input', { type: 'url', placeholder: 'https://… (optional)', 'aria-label': 'Link' });
+  link.value = it.link;
+  link.addEventListener('input', () => agEdit(it.id, 'link', link.value));
+  const err = el('p', { class: 'check', style: 'display:none;margin:0' });
+  const ready = agBtn('Ready', () => {
+    const cur = agItem(it.id);
+    if (!cur.text.trim() || !cur.to.trim()) { err.textContent = 'Say who it is for and what needs to happen.'; err.style.display = ''; return; }
+    Object.keys(agTO).filter(k => k.indexOf(it.id) === 0).forEach(k => { clearTimeout(agTO[k]); delete agTO[k]; });
+    cur.ready = true; agAskOpen[it.id] = false; delete agBackup[it.id];
+    agOp({ t: 'set', id: it.id, f: { text: cur.text, to: cur.to, where: cur.where, by: cur.by, link: cur.link, from: cur.from, kind: cur.askKind, ready: true } }, null,
+      e => { cur.ready = false; agAskOpen[it.id] = true; renderAgenda(); toast((e && e.message) || 'Could not save that ask.'); });
+    renderAgenda();
+  }, 'pri');
+  const cancel = agBtn('Cancel', () => {
+    const cur = agItem(it.id), bk = agBackup[it.id];
+    if (!cur.ready || !bk) { agDel(it.id); return; }
+    Object.assign(cur, { text: bk.text, to: bk.to, where: bk.where, by: bk.by, link: bk.link, from: bk.from, askKind: bk.kind });
+    agAskOpen[it.id] = false; delete agBackup[it.id];
+    agOp({ t: 'set', id: it.id, f: { text: bk.text, to: bk.to, where: bk.where, by: bk.by, link: bk.link, from: bk.from, kind: bk.kind } });
+    renderAgenda();
+  });
+  const remove = it.ready ? agBtn('Delete', () => agDel(it.id), 'dng') : '';
+  return el('div', { class: 'agask agform' }, [
+    el('b', { text: 'Add ask' }),
+    el('div', { class: 'grid2' }, [fld('From', from), fld('Type', el('div', {}, [el('div', { class: 'toggle', role: 'group', 'aria-label': 'Type' }, [bT, bA]), help]))]),
+    fld('To', owners.el), fld('The ask', text),
+    el('div', { class: 'grid2' }, [fld('Where it lives', where), fld('By when', by)]),
+    fld('Link', link), err,
+    el('div', { class: 'agbtns' }, [ready, cancel, remove]),
+  ]);
+}
+
+/* ---- blocks */
+function agBody(id) {
+  const k = [], pm = agIsPm();
+  if (id === 'open') {
+    if (ag.karakiaOn) {
+      const inp = el('input', { class: 'agcell', value: ag.karakia, placeholder: 'Who is leading?', 'aria-label': 'Karakia', readonly: agRO() });
+      inp.addEventListener('input', () => { ag.karakia = inp.value; clearTimeout(agTO.kar); agTO.kar = setTimeout(() => { delete agTO.kar; agOp({ t: 'meta', f: 'karakia', v: ag.karakia }); }, 700); agStatus(); });
+      k.push(el('div', { class: 'agr' }, [el('span', { class: 'agl', text: 'Karakia' }), inp]));
+    }
+    const chips = (kind, who) => ag.people.map(p => {
+      const on = ag[kind].indexOf(p.name) >= 0, can = !agRO() && (kind === 'apol' ? pm : (pm || p.name === ag.me));
+      return el('button', { type: 'button', class: 'agchip' + (kind === 'apol' ? ' warm' : ''), 'aria-pressed': String(on), onclick: () => { if (can) agToggle(kind, p.name); }, style: can ? '' : 'cursor:default', text: p.display + (kind === 'present' && p.name === ag.me ? ' (you)' : '') });
+    });
+    k.push(el('div', { class: 'agr' }, [el('span', { class: 'agl', text: 'Present' }), el('div', {}, [el('div', { class: 'agchips' }, chips('present')), el('div', { class: 'small', text: pm ? 'Tap a name to mark them present.' : 'Tap your own name.' })])]));
+    k.push(el('div', { class: 'agr' }, [el('span', { class: 'agl', text: 'Apologies' }), el('div', {}, [el('div', { class: 'agchips' }, chips('apol')), el('div', { class: 'small', text: pm ? 'Chair: tap a name to record an apology.' : 'The chair adds apologies.' })])]));
+    k.push(el('div', { class: 'agr' }, [el('span', { class: 'agl', text: 'Minutes and agenda' }),
+      el('button', { type: 'button', class: 'agchip', 'aria-pressed': String(ag.minutesOk), style: pm && !agRO() ? '' : 'cursor:default', text: ag.minutesOk ? 'Confirmed' : (pm ? 'Tap to confirm' : 'Not yet confirmed'), onclick: () => { if (pm && !agRO()) { ag.minutesOk = !ag.minutesOk; agOp({ t: 'meta', f: 'minutes', v: ag.minutesOk }); renderAgenda(); } } }),
+      ag.minutesLink ? el('a', { class: 'aglk', href: ag.minutesLink, target: '_blank', rel: 'noopener', text: 'Last meeting’s minutes ↗' }) : '']));
+    k.push(el('div', { class: 'agr' }, [el('span', { class: 'agl', text: 'Lightning updates' }), el('span', { class: 'small', style: 'padding-top:6px', text: 'Go round the room: what has everyone been up to? Add an item or an ask below if something comes out of it.' })]));
+  }
+  if (id === 'proj') {
+    ag.items.filter(x => x.kind === 'line' && (pm || !x.hidden)).forEach(x => k.push(agLineRow(x)));
+    if (pm && !agRO()) k.push(el('div', { class: 'agr' }, [agBtn('+ Add a line', () => agAdd('proj', 'line'), 'sm'), el('span', { class: 'small', text: 'PM only. Hide a line in a month with nothing to say; members won’t see it.' })]));
+    k.push(agTasksRow('proj', 'Outstanding items'));
+  } else if (ag.groups.indexOf(id) >= 0) k.push(agTasksRow(id, 'Open tasks'));
+  const mine = ag.items.filter(x => x.block === id && x.kind !== 'line');
+  mine.filter(x => x.kind === 'item').forEach(x => k.push(agItemRow(x)));
+  mine.filter(x => x.kind === 'ask').forEach(x => k.push(x.ready && !agAskOpen[x.id] ? agAskCard(x) : agAskForm(x)));
+  if (!agRO()) k.push(el('div', { class: 'agbtns' }, [agBtn('+ Add item', () => agAdd(id, 'item')), agBtn('+ Add ask', () => agAdd(id, 'ask'))]));
+  return k;
+}
+function agBlock(id) {
+  const col = !!agCol[id];
+  let sub = '';
+  if (ag.groups.indexOf(id) >= 0) { const d = ag.done[id] || 0, o = ag.tasks.filter(t => t.block === id).length; sub = ' · ' + d + ' action' + (d === 1 ? '' : 's') + ' done, ' + o + ' open'; }
+  const head = el('button', { type: 'button', class: 'agh', 'aria-expanded': String(!col), onclick: () => { agCol[id] = !col; try { localStorage.setItem(PFX + 'AgCol', JSON.stringify(agCol)); } catch (e) {} renderAgenda(); } },
+    [el('span', { class: 'agcv', text: col ? '▸' : '▾' }), el('span', {}, [agBlockName(id), el('span', { class: 'small', style: 'font-weight:400', text: sub })])]);
+  return el('section', { class: 'agb' }, [head, col ? '' : el('div', { class: 'agbody' }, agBody(id))]);
+}
+
+function agBarText() {
+  const asks = ag.items.filter(x => x.kind === 'ask'), ready = asks.filter(x => x.ready).length, left = asks.length - ready;
+  const notes = Object.keys(ag.notes).filter(k => String(ag.notes[k] || '').trim()).length;
+  return ready + ' ask' + (ready === 1 ? '' : 's') + ' and ' + notes + ' note' + (notes === 1 ? '' : 's') + ' ready' + (left ? ' · ' + left + ' unfinished (left out)' : '');
+}
+function agPublish() {
+  if (agBusy()) { toast('Still saving. Try again in a moment.'); return; }
+  call('agendaPublish', [PM_KEY], r => { agResult = r; agPubArmed = false; ag.state = 'published'; renderAgenda(); },
+    e => { agPubArmed = false; fail(e); renderAgenda(); });
+}
+function renderAgenda() {
+  if (!ag) return;
+  const kids = [];
+  if (MODE !== 'pm') kids.push(navBar());
+  const pm = agIsPm(), draft = ag.state === 'draft';
+  const state = ag.state === 'published' ? 'Published and closed' : draft ? (ag.pm ? 'Draft: only you can see this' : 'Not open yet') : 'Open: everyone can add and edit';
+  kids.push(el('header', {}, [el('div', { class: 'eyebrow', text: ORG + ' · meeting agenda' }), el('h1', {}, ['Meeting ', el('em', { text: 'agenda' })]),
+    el('p', { class: 'small', style: 'margin:8px 0 0', text: ag.meetingLabel + ' · ' + state })]));
+  const top = [];
+  if (ag.pm) top.push(agBtn(agPreview ? 'Back to PM view' : 'Preview as member', () => { agPreview = !agPreview; renderAgenda(); }));
+  if (pm && ag.state === 'published') top.push(agBtn('Reopen for editing', () => agSetState('shared'), 'pri'));
+  else if (pm) top.push(agBtn(draft ? 'Share with the team' : 'Back to draft', () => agSetState(draft ? 'shared' : 'draft'), draft ? 'pri' : ''));
+  if (top.length || ag.items) top.push(el('span', { class: 'small', id: 'ag-save', text: agBusy() ? 'Saving…' : 'All saved' }));
+  kids.push(el('div', { class: 'agtop' }, top));
+  if (!ag.items) {
+    kids.push(el('section', { class: 'card' }, [el('h2', { text: 'The agenda isn’t open yet' }), el('p', { class: 'muted', style: 'margin:0', text: 'You’ll be able to add to it once the PM shares it. This page checks by itself.' })]));
+    app.replaceChildren(...kids);
+    return;
+  }
+  if (ag.state === 'published') {
+    const r = agResult;
+    kids.push(el('div', { class: 'agdone' }, r && ag.pm ? ['Published. ', r.asks + ' ask' + (r.asks === 1 ? '' : 's') + ' sent to your queue, ', r.notes + ' note' + (r.notes === 1 ? '' : 's') + ' held back for you to check',
+      r.left ? ', ' + r.left + ' unfinished ask' + (r.left === 1 ? '' : 's') + ' left out' : '', '. ',
+      r.minutes ? el('a', { href: r.minutes, target: '_blank', rel: 'noopener', text: 'Agenda added to the minutes ↗' }) : (r.minutesNote || '')] : 'This meeting is published and closed.'));
+  }
+  agBlocksList().forEach(id => kids.push(agBlock(id)));
+  if (pm && ag.state === 'shared') {
+    const go = agBtn(agPubArmed ? 'Tap again to publish' : 'Publish and close meeting', () => { if (!agPubArmed) { if (agBusy()) { toast('Still saving. Try again in a moment.'); return; } agPubArmed = true; renderAgenda(); } else agPublish(); }, 'pri');
+    kids.push(el('div', { class: 'batch' }, [el('span', { id: 'ag-bar', text: agBarText() }), go,
+      agPubArmed ? agBtn('Not yet', () => { agPubArmed = false; renderAgenda(); }) : '']));
+  }
+  if (MODE === 'pm') kids.push(el('section', { class: 'inline' }, [el('a', { class: 'btn ghost', href: pmUrl(), text: 'Back to project-manager view' })]));
+  app.replaceChildren(...kids);
+  if (agFocus) { const n = document.getElementById(agFocus); agFocus = ''; if (n) n.focus(); }
+}
+
+/* ---- loading and keeping fresh */
+function agMerge(d) {
+  if (!ag || !ag.items || !d.items) { ag = d; return; }
+  const local = {};
+  ag.items.forEach(x => { local[x.id] = x; });
+  d.items = d.items.filter(s => !agGone[s.id]);
+  d.items.forEach(s => { const l = local[s.id]; if (l && agDirty[s.id]) Object.keys(agDirty[s.id]).forEach(f => { s[f] = l[f]; }); });
+  ag.items.forEach(l => { if (l._new && !d.items.some(s => s.id === l.id)) d.items.push(l); });
+  Object.keys(agDirtyN).forEach(a => { d.notes[a] = ag.notes[a]; });
+  ag = d;
+}
+const agTyping = () => { const a = document.activeElement; return !!(a && app.contains(a) && /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName)); };
+function agTick() {
+  if (VIEW !== 'agenda' || document.hidden || agBusy() || busy) return;
+  qcall('agendaGet', [getMe(), PM_KEY], d => { if (VIEW !== 'agenda' || agBusy()) return; agMerge(d); if (!agTyping()) renderAgenda(); }, () => {});
+}
+function loadAgenda() { call('agendaGet', [getMe(), PM_KEY], d => { agMerge(d); renderAgenda(); clearInterval(agPoll); agPoll = setInterval(agTick, 8000); }); }
+function renderAgendaPage() { if (ag) { renderAgenda(); agTick(); } else loadAgenda(); }
+function agendaUrl() { return pmUrl() + '&view=agenda'; }
+
 // When embedded in your own website, tell the page how tall we are so the frame fits without scrollbars.
 function postHeight() { try { const h = document.documentElement.scrollHeight; window.top.postMessage({ briefingHeight: h, ccanHeight: h }, '*'); } catch (e) {} }
 try { new ResizeObserver(postHeight).observe(document.body); } catch (e) { setInterval(postHeight, 1000); }
@@ -1403,9 +1801,10 @@ function renderMap(svgText) {
 function loadMap() { call('pmMap', [PM_KEY], d => renderMap(d.svg)); }
 
 if (MODE === 'pm' && VIEW === 'map') loadMap();
+else if (MODE === 'pm' && VIEW === 'agenda') loadAgenda();
 else if (MODE === 'pm') loadPm();
-else if (!API) google.script.url.getLocation(loc => { const p = (loc.parameter || {}).p; if (p) ME = p; if ((loc.parameter || {}).view === 'add') VIEW = 'add'; loadBriefing(); });
-else { const q = new URLSearchParams(location.search); const p = q.get('p'); if (p) ME = p; loadBriefing(); }
+else if (!API) google.script.url.getLocation(loc => { const p = (loc.parameter || {}).p; if (p) ME = p; const vw = (loc.parameter || {}).view; if (vw === 'add' || vw === 'agenda') VIEW = vw; loadBriefing(); });
+else { const q = new URLSearchParams(location.search); const p = q.get('p'); if (p) ME = p; if (q.get('view') === 'agenda') VIEW = 'agenda'; loadBriefing(); }
 </script>
 </body>
 </html>
