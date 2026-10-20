@@ -318,7 +318,9 @@ if (MODE === 'pm' && API) {   // static site: the PM key arrives once in ?pm= an
   try { if (q) localStorage.setItem(PFX + 'PmKey', q); PM_KEY = q || localStorage.getItem(PFX + 'PmKey') || ''; } catch (e) { PM_KEY = q; }
 }
 let VIEW = CFG.view;
-if (API && MODE === 'pm') { const v = new URLSearchParams(location.search).get('view'); if (v) VIEW = v; }   // static site: the map link carries ?view=map   // 'my' (My asks) or 'add' (Add asks)
+if (API && MODE === 'pm') { const v = new URLSearchParams(location.search).get('view'); if (v) VIEW = v; }   // static site: the map link carries ?view=map
+// static site: a PM link pasted onto the members' address (?pm=KEY) is forwarded to the PM page
+if (API && ROOT && MODE === 'brief' && new URLSearchParams(location.search).get('pm')) { location.replace(ROOT + 'pm/' + location.search); }   // 'my' (My asks) or 'add' (Add asks)
 // All fixed wording comes from the Wording tab in the Briefings sheet (the server sends it with every response).
 let WORDS = {};
 function t(key, v) { return String(WORDS[key] == null ? '' : WORDS[key]).replace(/[{]([a-z_]+)[}]/g, (m, k) => (v && v[k] != null ? v[k] : m)); }
