@@ -306,11 +306,13 @@ details.pfold[open] > summary { margin-bottom: 8px; }
 .agi { border: 1.5px solid var(--muted); background: var(--paper); color: var(--ink); border-radius: 6px; padding: 2px 8px; font-size: calc(13px * var(--s)); font-weight: 600; cursor: pointer; white-space: nowrap; }
 .agi:hover:not(:disabled) { border-color: var(--ink); background: var(--accent-soft); }
 .agi:disabled { opacity: .35; cursor: default; }
-.agb { background: var(--paper); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
-.agh { width: 100%; display: flex; gap: 10px; align-items: center; background: none; border: 0; padding: 14px 16px; color: var(--ink); font: inherit; font-weight: 700; font-size: calc(17px * var(--s)); text-align: left; cursor: pointer; }
-.agh:hover { background: var(--ground); }
-.agcv { display: inline-block; width: 1.1em; color: var(--muted); flex: none; }
-.agbody { padding: 0 16px 14px; display: grid; }
+.agb { --bc: var(--accent); --bi: var(--paper); background: var(--paper); border: 1px solid var(--line); border-radius: 12px; overflow: hidden; }
+.agh { width: 100%; display: flex; gap: 12px; align-items: center; background: var(--bc); color: var(--bi); border: 0; padding: 14px 16px; font: inherit; font-weight: 700; font-size: calc(19px * var(--s)); text-align: left; cursor: pointer; }
+.agh:hover { filter: brightness(1.08); }
+.agsub { font-size: calc(14px * var(--s)); font-weight: 500; margin-left: 8px; opacity: .92; }
+.agchev { display: inline-flex; flex: none; align-items: center; justify-content: center; width: 34px; height: 34px; border-radius: 50%; background: rgba(255,255,255,.3); font-size: calc(24px * var(--s)); padding-bottom: 2px; line-height: 1; }
+.agpm { display: inline-flex; flex: none; align-items: center; justify-content: center; width: 22px; height: 22px; border: 1.5px solid var(--ink); border-radius: 4px; font-size: calc(17px * var(--s)); font-weight: 700; line-height: 1; }
+.agbody { display: grid; margin: 12px 16px 16px 22px; padding-left: 16px; border-left: 4px solid var(--bc); }
 .agr { display: flex; gap: 8px; align-items: flex-start; flex-wrap: wrap; padding: 8px 0; border-top: 1px solid var(--line); }
 .agl { flex: 0 0 130px; font-size: calc(13px * var(--s)); font-weight: 700; color: var(--muted); padding-top: 7px; }
 .agr > .aglabin { flex: 0 0 130px; width: 130px; font-weight: 700; color: var(--muted); font-size: calc(13px * var(--s)); }
@@ -1550,16 +1552,24 @@ function agLineRow(it) {
 }
 
 /* ---- tasks that come from the tracker (read-only) with notes */
+function agHideTask(id, hidden) {
+  const t = ag.tasks.find(x => x.id === id);
+  if (t) t.hidden = hidden;
+  agOp({ t: 'task', askId: id, hidden: hidden });
+  renderAgenda();
+}
 function agTasksRow(block, label) {
-  const ts = ag.tasks.filter(t => t.block === block);
+  const all = ag.tasks.filter(t => t.block === block), pm = agIsPm();
+  const ts = all.filter(t => pm || !t.hidden), nHid = all.filter(t => t.hidden).length;
   if (!ts.length) return '';
   const open = !!agTasks[block];
   const rows = [el('button', { type: 'button', class: 'agfold', 'aria-expanded': String(open), onclick: () => { agTasks[block] = !open; renderAgenda(); } },
-    [el('span', { class: 'agcv', text: open ? '▾' : '▸' }), el('b', { text: label }), el('span', { class: 'small', text: ' · ' + ts.length + ' · from the tracker, read-only' })])];
+    [el('span', { class: 'agpm', 'aria-hidden': 'true', text: open ? '−' : '+' }), el('b', { text: label }), el('span', { class: 'small', text: ' · ' + (all.length - nHid) + (pm && nHid ? ' (+' + nHid + ' hidden)' : '') + ' · from the tracker, read-only' })])];
   if (open) ts.forEach(t => {
     const note = ag.notes[t.id] || '', showNote = agNoteOpen[t.id] || !!note;
-    const kids = [el('div', { class: 'agtask' }, [el('span', { class: 'agtasktext' }, [t.text + ' ', el('span', { class: 'small', text: '· ' + t.who })]), note ? el('span', { class: 'agtag', text: 'note held for PM' }) : '',
-      agRO() ? '' : agBtn(showNote ? 'Hide note' : 'Add note', () => { agNoteOpen[t.id] = !showNote; renderAgenda(); }, 'sm')])];
+    const kids = [el('div', { class: 'agtask' + (t.hidden ? ' agdim' : '') }, [el('span', { class: 'agtasktext' }, [t.text + ' ', el('span', { class: 'small', text: '· ' + t.who })]), t.hidden ? el('span', { class: 'agtag', text: 'hidden in agenda' }) : '', note ? el('span', { class: 'agtag', text: 'note held for PM' }) : '',
+      agRO() ? '' : agBtn(showNote ? 'Hide note' : 'Add note', () => { agNoteOpen[t.id] = !showNote; renderAgenda(); }, 'sm'),
+      pm && !agRO() ? agBtn(t.hidden ? 'Show in agenda' : 'Hide from agenda', () => agHideTask(t.id, !t.hidden), 'sm') : ''])];
     if (showNote) {
       const ta = el('textarea', { class: 'agnote', rows: '2', placeholder: 'A note for the PM. It stays here until the meeting is published.', 'aria-label': 'Note on ' + t.text, readonly: agRO() });
       ta.value = note;
@@ -1576,7 +1586,7 @@ function agAskCard(it) {
   const min = !!agMin[it.id];
   const head = el('div', { class: 'agaskhead' }, [
     el('button', { type: 'button', class: 'agfold', 'aria-expanded': String(!min), onclick: () => { agMin[it.id] = !min; renderAgenda(); } },
-      [el('span', { class: 'agcv', text: min ? '▸' : '▾' }), el('b', { text: it.askKind === 'ask' ? 'Ask' : 'Task' }), el('span', { class: 'small', text: ' · to ' + it.to + ' · ' + it.where })]),
+      [el('span', { class: 'agpm', 'aria-hidden': 'true', text: min ? '+' : '−' }), el('b', { text: it.askKind === 'ask' ? 'Ask' : 'Task' }), el('span', { class: 'small', text: ' · to ' + it.to + ' · ' + it.where })]),
   ].concat(agRO() ? [] : agArrows(it).concat([agBtn('Edit', () => {
     agBackup[it.id] = { text: it.text, to: it.to, where: it.where, by: it.by, link: it.link, from: it.from, kind: it.askKind };
     agAskOpen[it.id] = true; renderAgenda();
@@ -1671,13 +1681,20 @@ function agBody(id) {
   if (!agRO()) k.push(el('div', { class: 'agbtns' }, [agBtn('+ Add item', () => agAdd(id, 'item')), agBtn('+ Add ask', () => agAdd(id, 'ask'))]));
   return k;
 }
+function agColour(id) {
+  if (ag.groups.indexOf(id) < 0) return '';
+  const i = ag.workstreams.indexOf(id);
+  return WS_COLOURS[(i < 0 ? ag.groups.indexOf(id) : i) % WS_COLOURS.length];
+}
+function agInk(hex) { const n = parseInt(hex.slice(1), 16); return (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) > 175 ? '#15211c' : '#ffffff'; }
 function agBlock(id) {
   const col = !!agCol[id];
   let sub = '';
-  if (ag.groups.indexOf(id) >= 0) { const d = ag.done[id] || 0, o = ag.tasks.filter(t => t.block === id).length; sub = ' · ' + d + ' action' + (d === 1 ? '' : 's') + ' done, ' + o + ' open'; }
+  if (ag.groups.indexOf(id) >= 0) { const d = ag.done[id] || 0, o = ag.tasks.filter(t => t.block === id && !t.hidden).length; sub = ' · ' + d + ' action' + (d === 1 ? '' : 's') + ' done, ' + o + ' open'; }
   const head = el('button', { type: 'button', class: 'agh', 'aria-expanded': String(!col), onclick: () => { agCol[id] = !col; try { localStorage.setItem(PFX + 'AgCol', JSON.stringify(agCol)); } catch (e) {} renderAgenda(); } },
-    [el('span', { class: 'agcv', text: col ? '▸' : '▾' }), el('span', {}, [agBlockName(id), el('span', { class: 'small', style: 'font-weight:400', text: sub })])]);
-  return el('section', { class: 'agb' }, [head, col ? '' : el('div', { class: 'agbody' }, agBody(id))]);
+    [el('span', { class: 'agchev', 'aria-hidden': 'true', text: col ? '▸' : '▾' }), el('span', {}, [agBlockName(id), el('span', { class: 'agsub', text: sub })])]);
+  const c = agColour(id);
+  return el('section', { class: 'agb', style: c ? '--bc:' + c + ';--bi:' + agInk(c) : '' }, [head, col ? '' : el('div', { class: 'agbody' }, agBody(id))]);
 }
 
 function agBarText() {
