@@ -323,6 +323,8 @@ details.pfold[open] > summary { margin-bottom: 8px; }
 .aglk { color: var(--accent); background: var(--accent-soft); border-radius: 999px; padding: 3px 11px; font-size: calc(13px * var(--s)); font-weight: 600; text-decoration: none; white-space: nowrap; }
 .aglkwrap { display: inline-flex; gap: 4px; align-items: center; }
 .aglinkin { width: 180px; font-size: calc(14px * var(--s)); padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--ground); color: var(--ink); }
+.agmeet input[type=date] { font: inherit; font-size: calc(14px * var(--s)); padding: 5px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--ground); color: var(--ink); }
+.agmeet .agcell { flex: 1 1 180px; border-bottom-color: var(--line); }
 .agchips { display: flex; flex-wrap: wrap; gap: 6px; }
 .agchip { border: 1.5px solid var(--muted); background: var(--paper); color: var(--ink); border-radius: 999px; padding: 4px 13px; font: inherit; font-size: calc(14px * var(--s)); cursor: pointer; }
 .agchip[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--paper); font-weight: 600; }
@@ -1442,13 +1444,14 @@ function agPump() {
 const agItem = id => ag && ag.items ? ag.items.find(x => x.id === id) : null;
 const agRO = () => ag.state === 'published';
 const agIsPm = () => ag.pm && !agPreview;
-const agBlocksList = () => ['open', 'proj'].concat(ag.groups, ['park']);
-const agBlockName = id => id === 'open' ? 'Opening' : id === 'proj' ? 'Project update' : id === 'park' ? 'Doesn’t have a place yet' : id;
+const agUnits = () => ag.blocks || ag.groups;   // groups, or workstreams when AGENDA_BLOCKS = workstreams
+const agBlocksList = () => ['open', 'proj'].concat(agUnits(), ['park']);
+const agBlockName = id => id === 'meet' ? 'Meeting dates and chairs' : id === 'open' ? 'Opening' : id === 'proj' ? 'Project update' : id === 'park' ? 'Doesn’t have a place yet' : id;
 function agShort(u) { try { return new URL(u).hostname.replace(/^www\./, ''); } catch (e) { return String(u).slice(0, 24); } }
 function agNewId() { const b = new Uint8Array(4); (window.crypto || {}).getRandomValues ? crypto.getRandomValues(b) : b.forEach((_, i) => { b[i] = Math.floor(Math.random() * 256); }); return 'G' + Array.from(b).map(x => x.toString(16).padStart(2, '0')).join(''); }
 function agWhereFor(block, cur) {
-  if (ag.groups.indexOf(block) >= 0) return block;
-  if (block === 'proj') return cur && ag.workstreams.indexOf(cur) >= 0 && ag.groups.indexOf(cur) < 0 ? cur : 'Not sure';
+  if (agUnits().indexOf(block) >= 0) return block;
+  if (block === 'proj') return cur && ag.workstreams.indexOf(cur) >= 0 && agUnits().indexOf(cur) < 0 ? cur : 'Not sure';
   return 'Not sure';
 }
 
@@ -1650,10 +1653,46 @@ function agAskForm(it) {
   ]);
 }
 
+/* ---- meeting dates and chairs (PM only; they live on the tracker's date row) */
+let agMeet = null, agMeetErr = '';
+const agPeopleList = () => el('datalist', { id: 'ag-people' }, ag.people.map(p => el('option', { value: p.display })).concat((ag.groups || []).map(g => el('option', { value: g }))));
+function agMeetLoad() { agOp({ t: 'meetings' }, r => { agMeet = r.meetings || []; renderAgenda(); }, e => { agMeetErr = (e && e.message) || 'Could not load the meetings.'; renderAgenda(); }); }
+function agMeetSave(from, date, chair, btn) {
+  if (btn) btn.disabled = true;
+  agMeetErr = '';
+  agOp({ t: 'meeting', from: from, date: date, chair: chair }, r => {
+    agMeet = r.meetings || [];
+    toast(from ? 'Meeting updated.' : 'Meeting added.');
+    loadAgenda();   // the agenda's own date or chair may have changed
+  }, e => { if (btn) btn.disabled = false; agMeetErr = (e && e.message) || 'Could not save that.'; renderAgenda(); });
+}
+function agMeetBody() {
+  if (agMeet === null) { if (!agMeetErr) { agMeet = undefined; agMeetLoad(); } }
+  const k = [el('p', { class: 'small', style: 'margin:0', text: 'Upcoming meetings on the tracker. A moved meeting keeps its column, and its asks and agenda move with it. Members don’t see this.' })];
+  if (agMeetErr) k.push(el('p', { class: 'check', style: 'margin:0', text: agMeetErr }));
+  if (!agMeet) { k.push(el('p', { class: 'small', text: agMeetErr ? '' : 'Loading…' })); return k; }
+  const row = (m) => {
+    const date = el('input', { type: 'date', 'aria-label': 'Date', value: m ? m.iso : '' });
+    const chair = el('input', { class: 'agcell', 'aria-label': 'Chair', placeholder: 'Chair (person or organisation)', list: 'ag-people', value: m ? m.chair : '' });
+    const save = agBtn(m ? 'Save' : 'Add meeting', () => { if (!date.value) { agMeetErr = 'Pick a date.'; renderAgenda(); return; } agMeetSave(m ? m.iso : '', date.value, chair.value, save); }, m ? 'sm' : 'sm pri');
+    return el('div', { class: 'agr agmeet' }, [el('span', { class: 'agl', text: m ? m.label.replace(/ \d{4}$/, '') : 'New' }), date, chair, save]);
+  };
+  agMeet.forEach(m => k.push(row(m)));
+  k.push(row(null));
+  k.push(agPeopleList());
+  return k;
+}
+
 /* ---- blocks */
 function agBody(id) {
+  if (id === 'meet') return agMeetBody();
   const k = [], pm = agIsPm();
   if (id === 'open') {
+    if (pm && !agRO()) {
+      const ch = el('input', { class: 'agcell', value: ag.chair, placeholder: 'Who is chairing?', 'aria-label': 'Chair', list: 'ag-people' });
+      ch.addEventListener('input', () => { ag.chair = ch.value; clearTimeout(agTO.chair); agTO.chair = setTimeout(() => { delete agTO.chair; agOp({ t: 'meta', f: 'chair', v: ag.chair }); }, 700); agStatus(); });
+      k.push(el('div', { class: 'agr' }, [el('span', { class: 'agl', text: 'Chair' }), ch, agPeopleList()]));
+    } else if (ag.chair) k.push(el('div', { class: 'agr' }, [el('span', { class: 'agl', text: 'Chair' }), el('span', { style: 'padding-top:6px', text: ag.chair })]));
     if (ag.karakiaOn) {
       const inp = el('input', { class: 'agcell', value: ag.karakia, placeholder: 'Who is leading?', 'aria-label': 'Karakia', readonly: agRO() });
       inp.addEventListener('input', () => { ag.karakia = inp.value; clearTimeout(agTO.kar); agTO.kar = setTimeout(() => { delete agTO.kar; agOp({ t: 'meta', f: 'karakia', v: ag.karakia }); }, 700); agStatus(); });
@@ -1674,7 +1713,7 @@ function agBody(id) {
     ag.items.filter(x => x.kind === 'line' && (pm || !x.hidden)).forEach(x => k.push(agLineRow(x)));
     if (pm && !agRO()) k.push(el('div', { class: 'agr' }, [agBtn('+ Add a line', () => agAdd('proj', 'line'), 'sm'), el('span', { class: 'small', text: 'PM only. Hide a line in a month with nothing to say; members won’t see it.' })]));
     k.push(agTasksRow('proj', 'Outstanding items'));
-  } else if (ag.groups.indexOf(id) >= 0) k.push(agTasksRow(id, 'Open tasks'));
+  } else if (agUnits().indexOf(id) >= 0) k.push(agTasksRow(id, 'Open tasks'));
   const mine = ag.items.filter(x => x.block === id && x.kind !== 'line');
   mine.filter(x => x.kind === 'item').forEach(x => k.push(agItemRow(x)));
   mine.filter(x => x.kind === 'ask').forEach(x => k.push(x.ready && !agAskOpen[x.id] ? agAskCard(x) : agAskForm(x)));
@@ -1682,15 +1721,15 @@ function agBody(id) {
   return k;
 }
 function agColour(id) {
-  if (ag.groups.indexOf(id) < 0) return '';
+  if (agUnits().indexOf(id) < 0) return '';
   const i = ag.workstreams.indexOf(id);
-  return WS_COLOURS[(i < 0 ? ag.groups.indexOf(id) : i) % WS_COLOURS.length];
+  return WS_COLOURS[(i < 0 ? agUnits().indexOf(id) : i) % WS_COLOURS.length];
 }
-function agInk(hex) { const n = parseInt(hex.slice(1), 16); return (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) > 175 ? '#15211c' : '#ffffff'; }
+function agInk(hex) { const n = parseInt(hex.slice(1), 16); return (0.299 * (n >> 16) + 0.587 * ((n >> 8) & 255) + 0.114 * (n & 255)) > 150 ? '#15211c' : '#ffffff'; }   // amber/yellow get dark text
 function agBlock(id) {
-  const col = !!agCol[id];
+  const col = id === 'meet' ? agCol.meet !== false : !!agCol[id];   // the PM's dates panel starts folded
   let sub = '';
-  if (ag.groups.indexOf(id) >= 0) { const d = ag.done[id] || 0, o = ag.tasks.filter(t => t.block === id && !t.hidden).length; sub = ' · ' + d + ' action' + (d === 1 ? '' : 's') + ' done, ' + o + ' open'; }
+  if (agUnits().indexOf(id) >= 0) { const d = ag.done[id] || 0, o = ag.tasks.filter(t => t.block === id && !t.hidden).length; sub = ' · ' + d + ' action' + (d === 1 ? '' : 's') + ' done, ' + o + ' open'; }
   const head = el('button', { type: 'button', class: 'agh', 'aria-expanded': String(!col), onclick: () => { agCol[id] = !col; try { localStorage.setItem(PFX + 'AgCol', JSON.stringify(agCol)); } catch (e) {} renderAgenda(); } },
     [el('span', { class: 'agchev', 'aria-hidden': 'true', text: col ? '▸' : '▾' }), el('span', {}, [agBlockName(id), el('span', { class: 'agsub', text: sub })])]);
   const c = agColour(id);
@@ -1732,6 +1771,7 @@ function renderAgenda() {
       r.left ? ', ' + r.left + ' unfinished ask' + (r.left === 1 ? '' : 's') + ' left out' : '', '. ',
       r.minutes ? el('a', { href: r.minutes, target: '_blank', rel: 'noopener', text: 'Agenda added to the minutes ↗' }) : (r.minutesNote || '')] : 'This meeting is published and closed.'));
   }
+  if (pm && ag.trackerOn) kids.push(agBlock('meet'));
   agBlocksList().forEach(id => kids.push(agBlock(id)));
   if (pm && ag.state === 'shared') {
     const go = agBtn(agPubArmed ? 'Tap again to publish' : 'Publish and close meeting', () => { if (!agPubArmed) { if (agBusy()) { toast('Still saving. Try again in a moment.'); return; } agPubArmed = true; renderAgenda(); } else agPublish(); }, 'pri');
@@ -1817,6 +1857,7 @@ function renderMap(svgText) {
 }
 function loadMap() { call('pmMap', [PM_KEY], d => renderMap(d.svg)); }
 
+if (MODE === 'pm' && API && new URLSearchParams(location.search).get('view') === 'agenda') VIEW = 'agenda';
 if (MODE === 'pm' && VIEW === 'map') loadMap();
 else if (MODE === 'pm' && VIEW === 'agenda') loadAgenda();
 else if (MODE === 'pm') loadPm();
