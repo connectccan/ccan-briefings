@@ -127,6 +127,15 @@ details.fold > .fold-body { display: grid; gap: 14px; margin-top: 12px; }
 .chip.cant { background: var(--warm-soft); color: var(--warm); }
 .chip.open { background: var(--quiet-soft); color: var(--quiet); }
 .chip.query { background: var(--warm-soft); color: var(--warm); }
+.chip.hold { background: var(--quiet-soft); color: var(--quiet); }
+.ask.nudging { outline: 4px solid var(--warm); outline-offset: 2px; }
+.ask.watching { border-left: 6px solid var(--quiet); }
+.ask.pinned { outline: 3px solid var(--accent); outline-offset: 1px; }
+.ask.pinned .ask-text { font-weight: 800; }
+.tag { display: inline-block; font-size: calc(12px * var(--s)); font-weight: 800; letter-spacing: .06em; text-transform: uppercase; padding: 3px 10px; border-radius: 999px; background: var(--warm); color: var(--paper); justify-self: start; }
+.tag.pin { background: var(--accent); }
+.snooze-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.snooze-row input[type=date] { font-size: inherit; padding: 6px 8px; border: 1px solid var(--line); border-radius: 6px; background: var(--paper); color: var(--ink); }
 .resp button.ghosty { border-style: dashed; color: var(--muted); font-weight: 500; }
 .note { font-size: calc(14px * var(--s)); color: var(--muted); margin: 0; }
 .stack { display: grid; gap: 10px; }
@@ -270,31 +279,14 @@ details.pfold[open] > summary { margin-bottom: 8px; }
 .infobtn[aria-expanded="true"] { background: var(--accent-soft); }
 .infobtn .ico svg { width: 1.5em; height: 1.5em; }
 .ico-label { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+/* system map (optional/SystemMap.gs, PM only). The drawing's own styles live in Map.html */
 .wide { max-width: 860px; }
-/* system map (PM only) */
 .map-ctl { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .map-ctl button { border: 1px solid var(--line); background: var(--paper); color: var(--ink); font-size: calc(14px * var(--s)); font-weight: 600; min-height: 40px; padding: 4px 14px; border-radius: 8px; cursor: pointer; }
 .map-ctl button[aria-pressed="true"] { border-color: var(--accent); background: var(--accent-soft); }
 .map-ctl label { font-size: calc(14px * var(--s)); color: var(--muted); display: inline-flex; gap: 6px; align-items: center; }
 .sysmap .scroll { overflow-x: auto; background: var(--paper); border: 1px solid var(--line); border-radius: 10px; }
 .sysmap svg { display: block; width: 100%; min-width: 640px; height: auto; }
-.sysmap .t, .sysmap .th { fill: var(--ink); font-size: 14px; font-family: var(--f-body); }
-.sysmap .th { font-weight: 600; }
-.sysmap .ts { fill: var(--muted); font-size: 12px; font-family: var(--f-body); }
-.sysmap .arr { stroke: var(--muted); stroke-width: 1.5; fill: none; }
-.sysmap .leader { stroke: var(--line); stroke-width: 1; }
-.sysmap .c-teal > rect, .sysmap rect.c-teal { fill: var(--accent-soft); stroke: var(--accent); }
-.sysmap .c-gray > rect, .sysmap rect.c-gray { fill: var(--quiet-soft); stroke: var(--quiet); }
-.sysmap .c-coral > rect, .sysmap rect.c-coral { fill: var(--warm-soft); stroke: var(--warm); }
-.sysmap .c-purple > rect, .sysmap rect.c-purple { fill: color-mix(in srgb, var(--k-ask, #5b5fc7) 16%, var(--paper)); stroke: var(--k-ask, #5b5fc7); }
-.sysmap .ai { cursor: pointer; }
-.sysmap .ai .ts { fill: var(--ink); font-weight: 600; }
-.sysmap .ai:hover rect, .sysmap .ai:focus-visible rect { stroke-width: 1.5; }
-.sysmap .ai:focus-visible { outline: none; }
-.sysmap svg.fe .be { display: none; }
-.sysmap .fe-only { display: none; }
-.sysmap svg.fe .fe-only { display: inline; }
-.sysmap svg.noai .ai { display: none; }
 /* meeting agenda */
 .agtop { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
 .agbtn { border: 2px solid var(--ink); background: var(--paper); color: var(--ink); font-weight: 700; font-size: calc(14px * var(--s)); padding: 8px 14px; border-radius: 8px; cursor: pointer; }
@@ -368,10 +360,10 @@ if (MODE === 'pm' && API) {   // static site: the PM key arrives once in ?pm= an
   const q = new URLSearchParams(location.search).get('pm') || '';
   try { if (q) localStorage.setItem(PFX + 'PmKey', q); PM_KEY = q || localStorage.getItem(PFX + 'PmKey') || ''; } catch (e) { PM_KEY = q; }
 }
-let VIEW = CFG.view;
-if (API && MODE === 'pm') { const v = new URLSearchParams(location.search).get('view'); if (v) VIEW = v; }   // static site: the map link carries ?view=map
+let VIEW = CFG.view;   // 'my' (My asks) or 'add' (Add asks)
+if (API && MODE === 'pm' && new URLSearchParams(location.search).get('view') === 'map') VIEW = 'map';   // static site: the map link carries ?view=map
 // static site: a PM link pasted onto the members' address (?pm=KEY) is forwarded to the PM page
-if (API && ROOT && MODE === 'brief' && new URLSearchParams(location.search).get('pm')) { location.replace(ROOT + 'pm/' + location.search); }   // 'my' (My asks) or 'add' (Add asks)
+if (API && ROOT && MODE === 'brief' && new URLSearchParams(location.search).get('pm')) { location.replace(ROOT + 'pm/' + location.search); }
 // All fixed wording comes from the Wording tab in the Briefings sheet (the server sends it with every response).
 let WORDS = {};
 function t(key, v) { return String(WORDS[key] == null ? '' : WORDS[key]).replace(/[{]([a-z_]+)[}]/g, (m, k) => (v && v[k] != null ? v[k] : m)); }
@@ -416,14 +408,17 @@ function chip(s) {
 }
 function fail(err) { busy = false; app.prepend(el('div', { class: 'error', role: 'alert', text: (err && err.message) || String(err) })); }
 const BUSY_DEFAULT = 'Got it, on it…|Nearly there…|Google is thinking. It does that sometimes…|Still going, thanks for waiting…';
-const busyWords = () => String(t('busy_words') || BUSY_DEFAULT).split('|').map(x => x.trim()).filter(Boolean);
+// The group's own loading words are remembered on the device, so even the first wait of a visit uses them.
+let BUSY_SAVED = ['', ''];
+try { BUSY_SAVED = JSON.parse(localStorage.getItem(PFX + 'Busy') || '["",""]') || ['', '']; } catch (e) {}
+const busyWords = () => String(t('busy_words') || BUSY_SAVED[1] || BUSY_DEFAULT).split('|').map(x => x.trim()).filter(Boolean);
 let busyN = 0, busyEl = null, busyTimer = null;
 function showBusy() {
   busyN++;
   if (busyEl) return;
   const words = busyWords();
   const word = el('span', { text: words[0] });
-  busyEl = el('div', { class: 'busy', role: 'status', 'aria-live': 'polite' }, [el('i', { class: 'trail' }), el('div', { class: 'pill' }, [el('span', { class: 'leaf', text: t('busy_icon') || '⏳', 'aria-hidden': 'true' }), word])]);
+  busyEl = el('div', { class: 'busy', role: 'status', 'aria-live': 'polite' }, [el('i', { class: 'trail' }), el('div', { class: 'pill' }, [el('span', { class: 'leaf', text: t('busy_icon') || BUSY_SAVED[0] || '⏳', 'aria-hidden': 'true' }), word])]);
   document.body.append(busyEl);
   let i = 0;
   busyTimer = setInterval(() => { i = Math.min(i + 1, words.length - 1); word.textContent = words[i]; }, 2600);
@@ -439,7 +434,7 @@ function call(fn, args, ok, onFail) {
   const got = r => {
     busy = false; hideBusy();
     if (r == null) { (onFail || fail)(new Error('Something went wrong. Please reload the page.')); return; }
-    if (r.words) WORDS = r.words;
+    if (r.words) { WORDS = r.words; try { localStorage.setItem(PFX + 'Busy', JSON.stringify([WORDS.busy_icon || '', WORDS.busy_words || ''])); } catch (e) {} }
     if (r.labels && !labelSaved && (r.labels === 'icons' || r.labels === 'words') && r.labels !== labelMode) { labelMode = r.labels; applyLabels(); }
     ok(r);
   };
@@ -579,8 +574,8 @@ applyLabels();
 /* ------------------------------------------------ share (QR) */
 /** Where the members' page lives: the static site's root, or the Apps Script web app address. */
 function memberUrl() { return ROOT || CFG.shareUrl || location.href; }
-function mapUrl() { return pmUrl() + '&view=map'; }
 function addUrl() { return ROOT ? ROOT + 'add/' : memberUrl() + (memberUrl().indexOf('?') < 0 ? '?' : '&') + 'view=add'; }
+function mapUrl() { return pmUrl() + '&view=map'; }
 function pmUrl() { return (ROOT ? ROOT + 'pm/' : memberUrl() + '?') + (ROOT ? '?' : '') + 'pm=' + encodeURIComponent(PM_KEY); }
 function shareUrl() {
   // A PM key never goes in a code: the PM page shares the members' briefing instead.
@@ -760,6 +755,10 @@ function renderBriefing() {
 let memSort = 'default';
 try { memSort = localStorage.getItem(PFX + 'MemSort') || 'default'; } catch (e) {}
 function sortMine(list) {
+  const pinFirst = l => l.map((a, i) => [a, i]).sort((x, y) => (y[0].pinned ? 1 : 0) - (x[0].pinned ? 1 : 0) || x[1] - y[1]).map(x => x[0]);
+  return pinFirst(sortMineBy(list));
+}
+function sortMineBy(list) {
   if (memSort === 'default') return list;
   const idx = new Map(list.map((a, i) => [a, i]));
   const KO = { grouptask: 0, individual: 1, groupask: 2 };
@@ -776,7 +775,7 @@ function sortPicker() {
   sel.setAttribute('aria-label', 'Sort by'); sel.title = 'Sort by';
   return el('label', { class: 'small', for: 'memsort', title: 'Sort by', style: 'display:flex;gap:8px;align-items:center;flex-wrap:wrap' }, [L('sort', tw('lbl_sort', 'Sort by')), sel]);
 }
-let doneOpen = false; // stays folded or open across re-renders
+let doneOpen = null; // stays folded or open across re-renders; starts as Settings DONE_FOLDED says
 function renderPart(me) {
   const mine = sortMine(data.mine);
   const head = el('div', { class: 'part-head' }, [el('h2', { text: t('h_part') })]);
@@ -826,8 +825,9 @@ function renderPart(me) {
     const shown = x => (String(x).trim() === '-' ? '' : String(x).trim());
     const hint = a.mode === 'invite' && !a.closed ? [shown(t('hint_invite')), a.joined ? shown(t('hint_invite_count', { joined: a.joined, total: a.total })) : ''].filter(Boolean).join(' ') : '';
     const FLAG = { individual: tw('flag_individual', 'Just yours'), groupask: tw('flag_groupask', 'Ask for group'), grouptask: tw('flag_grouptask', 'Task for group') };
-    return el('div', { class: 'ask k-' + a.kind, style: wsStyle(a.section) }, [
+    return el('div', { class: 'ask k-' + a.kind + (a.pinned ? ' pinned' : ''), style: wsStyle(a.section) }, [
       el('div', { class: 'flag', title: FLAG[a.kind] || t('kind_' + a.kind), 'aria-label': FLAG[a.kind] || t('kind_' + a.kind) }, [kindIcon(a.kind)]),
+      a.pinned ? el('span', { class: 'tag pin', text: 'Please look at this one' }) : '',
       hasWs() ? el('div', { class: 'wsname' }, [el('i'), a.section && a.section !== 'Not sure' ? a.section : 'Project area to be confirmed']) : '',
       el('div', { class: 'ask-text' }, [a.text, a.optional ? el('span', { class: 'optional', text: '  ' + t('if_someone') }) : '']),
       meta, linkLine, tail,
@@ -843,6 +843,7 @@ function renderPart(me) {
   if (openCards.length) kids.push(deckMode ? deckView(openCards) : el('div', { class: 'stack', style: 'gap:14px' }, openCards));
   else kids.push(el('p', { class: 'none', style: 'margin:0', text: t('none_for_you') }));
   const sections = [el('section', { class: 'part' }, kids)];
+  if (doneOpen === null) doneOpen = !data.doneFolded;
   if (doneCards.length) sections.push(el('details', { class: 'fold', open: doneOpen, ontoggle: e => { doneOpen = e.currentTarget.open; } }, [
     el('summary', {}, [el('h2', { text: 'Done' }), el('span', { class: 'cnt', text: String(doneCards.length) })]),
     el('div', { class: 'stack', style: 'gap:14px;margin-top:14px' }, doneCards),
@@ -976,7 +977,9 @@ function renderAdd() {
   } });
   kids.push(el('section', { class: 'addrow' }, [
     el('fieldset', {}, [el('legend', { text: t('add_when') }), el('div', { class: 'radio' }, [
-      el('label', {}, [rm, t('add_in_meeting')]), el('label', {}, [rb, t('add_between')])])]),
+      el('label', {}, [rm, t('add_in_meeting') + (data.meetingDuring ? ' on ' + data.meetingDuring : '')]),
+      el('label', {}, [rb, t('add_between') + (data.meetingBetween ? ': goes in the ' + data.meetingBetween + ' meeting' : '')])]),
+      el('p', { class: 'small', style: 'margin:0', text: 'Asks stay in Current until the next meeting after theirs has passed. If still open, they then move to Backlog.' })]),
     el('label', { class: 'radio', for: 'review' }, [rv, t('add_review')]),
     el('div', {}, [saveBtn]),
   ]));
@@ -1002,7 +1005,7 @@ function sortList(list, d) {
     : pmSort === 'kind' ? String(KO[a.kind] == null ? 9 : KO[a.kind]) : '';
   return list.slice().sort((x, y) => { const kx = key(x), ky = key(y); return kx < ky ? -1 : kx > ky ? 1 : idx.get(x) - idx.get(y); });
 }
-const pmFold = { brief: false, held: false, current: false, backlog: false, done: false };
+const pmFold = { brief: false, held: false, watch: false, current: false, backlog: false, done: false, snoozed: false };
 
 /** One editable ask card. opts: okLabel, okToast, dropLabel, ready (tick box instead of a save button), onCancel. */
 function pmEditCard(x, d, opts) {
@@ -1116,18 +1119,35 @@ function pmAskCard(a, d) {
     : people;
   const link = a.link ? el('div', { class: 'ask-link' }, [el('a', { href: a.link, target: '_blank', rel: 'noopener', 'aria-label': a.linkText || 'Link', title: a.linkText || 'Link' }, a.linkText ? a.linkText : [L('link', 'Link')])]) : '';
   const acts = [el('button', { class: 'btn ghost', type: 'button', 'aria-label': 'Edit', title: 'Edit', onclick: () => { editing[a.id] = true; renderPm(); } }, [L('pencil', tw('lbl_edit', 'Edit'))])];
+  const act = (fn, args, msg) => { if (busy) return; call(fn, [PM_KEY].concat(args), r => { data = r; renderPm(); toast(msg); }); };
+  if (a.hold) {
+    acts.push(el('button', { class: 'switch', type: 'button', text: 'Bring it back', onclick: () => act('pmHold', [a.id, 'restore'], 'Back in play.') }));
+  } else if (a.bucket === 'snoozed') {
+    acts.push(el('button', { class: 'switch', type: 'button', text: 'Bring it back now', onclick: () => act('pmHold', [a.id, 'restore'], 'Back in play.') }));
+  } else if (a.bucket !== 'done') {
+    // Review box (a nudge): look at it, then pin it, watch it or send it back. Watch list: pin it or send it back.
+    if (!a.nudging && !a.watching) acts.push(el('button', { class: 'switch', type: 'button', text: 'Add to nudges', onclick: () => act('pmNudge', [a.id, true], 'Added. It now shows in your review box.') }));
+    if (a.nudging) acts.push(el('button', { class: 'btn', type: 'button', text: 'Move to watch list', onclick: () => act('pmWatch', [a.id, true], 'On the watch list.') }));
+    if (a.nudging || a.watching) acts.push(el('button', { class: 'switch', type: 'button', text: 'Return to ' + a.home, onclick: () => act(a.watching ? 'pmWatch' : 'pmNudge', [a.id, false], 'Back in ' + a.home + '. It comes back for a nudge on its due date.') }));
+    if (d.pins) acts.push(el('button', { class: 'switch', type: 'button', text: a.pinned ? 'Unpin from their list' : 'Pin to the top of their list', onclick: () => act('pmPin', [a.id, !a.pinned], a.pinned ? 'Unpinned.' : 'Bold and first in their list until they answer.') }));
+  }
   if (a.mode === 'invite') {
     if (a.enough) acts.push(el('button', { class: 'switch', type: 'button', text: 'Reopen', onclick: () => { if (busy) return; call('pmEnough', [PM_KEY, a.id, false], r => { data = r; renderPm(); toast('Reopened.'); }); } }));
     else if (!a.level) acts.push(el('button', { class: 'btn', type: 'button', text: 'That’s enough', onclick: () => { if (busy) return; call('pmEnough', [PM_KEY, a.id, true], r => { data = r; renderPm(); toast('Marked as enough. It moves to Done.'); }); } }));
-    if (!a.level) acts.push(el('button', { class: 'switch', type: 'button', text: a.nudge ? 'Take off nudges' : 'Add to nudges', onclick: () => { if (busy) return; call('pmNudge', [PM_KEY, a.id, !a.nudge], r => { data = r; renderPm(); toast(a.nudge ? 'Taken off the nudge list.' : 'Added to the nudge list.'); }); } }));
   }
   if (a.bucket === 'backlog' && a.canPromote) {
     acts.push(el('button', { class: 'btn', type: 'button', disabled: a.onAgenda, text: a.onAgenda ? 'On the agenda (nudge ' + a.nudges + ')' : 'Put on the next agenda', onclick: () => { if (busy) return; call('pmPromote', [PM_KEY, a.id], r => { data = r; renderPm(); toast('Added to the next agenda as a nudge.'); }); } }));
   }
-  return el('div', { class: 'ask k-' + a.kind, style: wsStyle(a.section) }, [
+  const holdNote = a.hold ? el('span', { class: 'chip hold', text: a.hold === 'dropped' ? 'Dropped' : 'Back burner' }) : a.bucket === 'snoozed' ? el('span', { class: 'chip hold', text: 'Snoozed until ' + a.snoozedUntil }) : '';
+  return el('div', { class: 'ask k-' + a.kind + (a.nudging ? ' nudging' : '') + (a.watching ? ' watching' : '') + (a.pinned ? ' pinned' : ''), style: wsStyle(a.section) }, [
     el('div', { class: 'flag', title: KIND_PM[a.kind] || a.kind, 'aria-label': KIND_PM[a.kind] || a.kind }, [kindIcon(a.kind)]),
+    a.nudging ? el('span', { class: 'tag', text: 'Nudge' }) : '',
+    a.watching ? el('span', { class: 'tag', text: 'Watching' }) : '',
+    a.nudging ? el('div', { class: 'ask-meta', style: 'font-weight:700', text: a.nudgeWhy }) : '',
+    a.pinned ? el('span', { class: 'tag pin', text: 'Pinned in their list' }) : '',
     hasWs() ? el('div', { class: 'wsname' }, [el('i'), a.section && a.section !== 'Not sure' ? a.section : 'Project area to be confirmed']) : '',
     el('div', { class: 'ask-text', text: a.text }),
+    holdNote,
     el('div', { class: 'ask-meta', text: ['For ' + a.forText, a.by ? 'by ' + a.by : '', a.raised ? 'raised ' + a.raised : '', a.source].filter(Boolean).join(' · ') }),
     link,
     peopleFold,
@@ -1308,14 +1328,15 @@ function renderPm() {
     kids.push(sc);
   }
 
-  if (d.decisions.length) {
+  // optional/Decisions.gs: decisions from "Where we landed" wait here for Major / Minor / Remove
+  if (d.decisions && d.decisions.length) {
     const dc = el('section', { class: 'card' }, [el('h2', { text: 'Decisions to sort (' + d.decisions.length + ')' }),
-      el('p', { class: 'small', style: 'margin:0', text: 'From “Where we landed”. Major ones go on the dashboard and the Snapshot. Minor ones stay in the minutes only.' })]);
+      el('p', { class: 'small', style: 'margin:0', text: 'From “Where we landed”. Major ones go on the dashboard (and the Snapshot, if there is one). Minor ones stay in the minutes only.' })]);
     d.decisions.forEach(x => {
       const fLabel = el('input', { id: 'dl-' + x.id, value: x.label, placeholder: 'Short label', 'aria-label': 'Short label' });
       const fText = el('textarea', { id: 'dt-' + x.id, rows: 2, 'aria-label': 'What was decided' });
       fText.value = x.text;
-      const fWhere = el('select', { id: 'dw-' + x.id, 'aria-label': 'Where it belongs' }, [el('option', { value: '', text: 'Where it belongs: Admin' })].concat(d.sections.map(s => el('option', { value: s, text: s }))));
+      const fWhere = el('select', { id: 'dw-' + x.id, 'aria-label': 'Where it belongs' }, [el('option', { value: '', text: 'Where it belongs: ' + (d.defaultSection || 'not sure') })].concat((d.workstreams || []).map(s => el('option', { value: s, text: s }))));
       fWhere.value = x.section;
       const major = el('button', { class: 'btn', type: 'button', text: 'Major' });
       const minor = el('button', { class: 'btn ghost', type: 'button', text: 'Minor' });
@@ -1327,7 +1348,7 @@ function renderPm() {
         all.forEach(c => { c.disabled = true; }); b.textContent = 'Saving…';
         call('pmDecide', [PM_KEY, x.id, verdict, fLabel.value, fText.value, fWhere.value], r => { data = r; renderPm(); toast(msg); }, e => { reset(); fail(e); });
       };
-      major.addEventListener('click', go(major, 'major', 'Major: on the dashboard and the Snapshot.'));
+      major.addEventListener('click', go(major, 'major', 'Major: on the dashboard.'));
       minor.addEventListener('click', go(minor, 'minor', 'Minor: stays in the minutes.'));
       gone.addEventListener('click', go(gone, 'remove', 'Removed.'));
       dc.append(el('div', { class: 'q' }, [
@@ -1343,69 +1364,63 @@ function renderPm() {
 
   kids.push(briefSection());
 
-  // Held back: tick "Ready" on each one once it is checked, then publish the lot in one go.
+  // To review: nudges first (outlined), then asks to check. Tick "Ready" on each checked ask, then publish the lot in one go.
+  const nudged = sortList(d.list.filter(a => a.nudging && a.bucket !== 'done'), d);
   const heldKids = [];
-  if (!d.queue.length) heldKids.push(el('p', { class: 'none', style: 'margin:0', text: 'Nothing waiting. Asks appear here when the person adding them ticks “ask a PM to confirm”.' }));
+  if (!d.queue.length && !nudged.length) heldKids.push(el('p', { class: 'none', style: 'margin:0', text: 'Nothing to review. New asks and nudges show up here.' }));
+  nudged.forEach(a => heldKids.push(pmAskCard(a, d)));
   d.queue.forEach(x => heldKids.push(el('div', { class: 'ask k-' + x.kind, style: wsStyle(x.section) }, [
-    el('div', { class: 'flag', title: 'Held back · ' + (KIND_PM[x.kind] || ''), 'aria-label': 'Held back · ' + (KIND_PM[x.kind] || '') }, ['Held back ', kindIcon(x.kind)]),
+    el('div', { class: 'flag', title: (x.live ? 'Live, not yet checked' : 'Held back') + ' · ' + (KIND_PM[x.kind] || ''), 'aria-label': (x.live ? 'Live, not yet checked' : 'Held back') + ' · ' + (KIND_PM[x.kind] || '') }, [x.live ? 'Live, check ' : 'Held back ', kindIcon(x.kind)]),
     pmEditCard(x, d, { ready: true, dropLabel: 'Remove it' }),
   ])));
-  kids.push(foldSection('held', 'Held back for you to check', d.queue.length, heldKids, d.queue.length ? 'Correct anything that needs it and tick “Ready” on each one. Then press the button at the bottom once to publish them all.' : ''));
+  kids.push(foldSection('held', 'To review', d.queue.length + nudged.length, heldKids, (d.queue.length ? 'Asks held back, and asks that went live without a review tick. Correct anything that needs it and tick “Ready”, then press the button at the bottom once. ' : '') + (nudged.length ? 'Outlined cards are nudges: due soon or still waiting. Edit one, pin it to the top of their list, or reach out privately. Then move it to the watch list, or return it to where it came from.' : '')));
   if (d.queue.length) kids.push(el('div', { class: 'batch', id: 'batchbar' }, [el('button', { class: 'btn', type: 'button', onclick: publishReady })]));
 
   if (d.cants.length) {
     const cc = el('section', { class: 'card' }, [el('h2', { text: t('pm_cants_h') + ' (' + d.cants.length + ')' }),
-      el('p', { class: 'small', style: 'margin:0', text: t('pm_cants_help') })]);
+      el('p', { class: 'small', style: 'margin:0', text: 'Ask again keeps it on their list for the next meeting. Snooze hides it from you until the date you pick. ' + (d.backburner ? 'Back burner counts it as done for now, so you can pull it back later. ' : '') + 'Drop records it as dropped on the dashboard and takes it off everyone’s list.' })]);
     d.cants.forEach(x => {
       const again = el('button', { class: 'btn', type: 'button', text: t('pm_again') });
-      const drop = el('button', { class: 'switch', type: 'button', text: 'Let it go' });
-      const lock = b => { if (busy) return false; again.disabled = true; drop.disabled = true; b.textContent = t('saving'); return true; };
-      const unlock = e => { again.disabled = false; drop.disabled = false; again.textContent = t('pm_again'); drop.textContent = 'Let it go'; fail(e); };
+      const snooze = el('button', { class: 'btn ghost', type: 'button', text: 'Snooze until' });
+      const when = el('input', { type: 'date', 'aria-label': 'Snooze until this date', value: d.snoozeDefault || '' });
+      const burner = el('button', { class: 'switch', type: 'button', text: 'Back burner' });
+      const drop = el('button', { class: 'switch', type: 'button', text: 'Drop it' });
+      const all = [again, snooze].concat(d.backburner ? [burner] : [], [drop]);
+      const labels = all.map(b => b.textContent);
+      const lock = b => { if (busy) return false; all.forEach(z => { z.disabled = true; }); b.textContent = t('saving'); return true; };
+      const unlock = e => { all.forEach((z, i) => { z.disabled = false; z.textContent = labels[i]; }); fail(e); };
       again.addEventListener('click', () => { if (lock(again)) call('pmCarry', [PM_KEY, x.id, x.scope], r => { data = r; renderPm(); toast(t('pm_again_toast')); }, unlock); });
-      drop.addEventListener('click', () => { if (lock(drop)) call('pmRemoveOwner', [PM_KEY, x.id, x.scope], r => { data = r; renderPm(); toast('Let go. Taken off their list.'); }, unlock); });
+      snooze.addEventListener('click', () => { if (!when.value) { fail(new Error('Pick the date it should come back.')); return; } if (lock(snooze)) call('pmHold', [PM_KEY, x.id, 'snooze', when.value], r => { data = r; renderPm(); toast('Snoozed. It comes back after that date.'); }, unlock); });
+      burner.addEventListener('click', () => { if (lock(burner)) call('pmHold', [PM_KEY, x.id, 'backburner'], r => { data = r; renderPm(); toast('On the back burner. It counts as done for now.'); }, unlock); });
+      drop.addEventListener('click', () => { if (lock(drop)) call('pmHold', [PM_KEY, x.id, 'drop'], r => { data = r; renderPm(); toast('Dropped. It stays on the dashboard, marked as dropped.'); }, unlock); });
       cc.append(el('div', { class: 'q' }, [
         el('div', { class: 'small', text: x.source + ' · ' + x.scope + (x.by && x.by !== x.scope ? ' (answered by ' + x.by + ')' : '') }),
         el('div', { text: x.ask }),
-        el('div', { class: 'inline' }, [again, drop]),
+        el('div', { class: 'snooze-row' }, [again, snooze, when].concat(d.backburner ? [burner] : [], [drop])),
       ]));
     });
     kids.push(cc);
   }
 
   const by = b => sortList(d.list.filter(a => a.bucket === b), d);
-  const cur = by('current'), back = by('backlog'), dn = by('done');
+  const cur = by('current'), back = by('backlog'), dn = by('done'), snz = by('snoozed'), wat = by('watch');
   const none = txt => el('p', { class: 'none', style: 'margin:0', text: txt });
+  kids.push(foldSection('watch', 'Watch list', wat.length, wat.length ? wat.map(a => pmAskCard(a, d)) : [none('Nothing on the watch list.')],
+    'Nudges you have looked at and are keeping an eye on. They stay here until they are done, or until you return them to Current or Backlog.'));
   kids.push(foldSection('current', 'Current asks', cur.length, cur.length ? cur.map(a => pmAskCard(a, d)) : [none('Nothing open from the latest meeting.')],
-    'Raised at or since the latest meeting and not finished yet. Everyone invited is listed with what they have done.'));
+    'Raised at or since the last meeting that has passed, and not finished yet. Everyone invited is listed with what they have done.'));
   kids.push(foldSection('backlog', 'Backlog asks', back.length, back.length ? back.map(a => pmAskCard(a, d)) : [none('Nothing is hanging over from earlier meetings.')],
     d.hasBacklogRow ? 'Still open from earlier meetings. They are listed in the BACKLOG row for ' + (d.nextMeeting || 'the next meeting') + '. “Put on the next agenda” adds a copy to that meeting, marked as a nudge.' : d.dashOn ? 'Add a row labelled “BACKLOG (still open)” at the bottom of the ' + d.trackerTab + ' tab and these will be listed there for the next meeting.' : 'Still open from earlier meetings.'));
   kids.push(foldSection('done', 'Done', dn.length, dn.length ? dn.map(a => pmAskCard(a, d)) : [none('Nothing finished yet.')],
-    'Finished asks and tasks. You can still edit or reopen any of them.'));
+    'Finished asks and tasks, plus anything dropped or on the back burner (marked on the card). You can still edit or bring any of them back.'));
+  if (snz.length) kids.push(foldSection('snoozed', 'Snoozed', snz.length, snz.map(a => pmAskCard(a, d)), 'Hidden from your lists until the date shown, then they come back on their own.'));
 
-  const nudge = el('section', { class: 'card' }, [el('h2', { text: 'Friendly nudges' }), el('p', { class: 'small', style: 'margin:0', text: 'Asks due within two days with no answer, plus any invite asks you add with “Add to nudges”. Each goes only to people who haven’t answered. Copy one into your own email or chat if you want to send it.' })]);
-  if (!d.nudges.length) nudge.append(el('p', { class: 'none', style: 'margin:0', text: 'No nudges needed right now.' }));
-  d.nudges.forEach(n => {
-    nudge.append(el('pre', { class: 'copy', text: t(n.kind === 'invite' ? 'nudge_invite_text' : 'nudge_text', { to: n.to, ask: n.ask, by: n.by, when: n.when || '' }) }));
-    if (!d.emailOn || !n.id) return;
-    // Two taps on purpose: the first one asks, the second one sends.
-    const b = el('button', { class: 'btn ghost', type: 'button', text: 'Email this to ' + n.to });
-    let armed = false;
-    b.addEventListener('click', () => {
-      if (busy) return;
-      if (!armed) { armed = true; b.textContent = 'Tap again to send to ' + n.to; return; }
-      b.disabled = true; b.textContent = t('saving');
-      call('pmEmailNudge', [PM_KEY, n.id], r => { const n2 = r.sent; data = r; renderPm(); toast('Sent to ' + n2 + (n2 === 1 ? ' person.' : ' people.')); },
-        e => { b.disabled = false; armed = false; b.textContent = 'Email this to ' + n.to; fail(e); });
-    });
-    nudge.append(b);
-  });
-  kids.push(nudge);
 
   kids.push(el('section', { class: 'card' }, [el('h2', { text: 'Opener for the next meeting' }), el('pre', { class: 'copy', text: d.opener })]));
   kids.push(el('section', { class: 'inline' }, [
     el('a', { class: 'btn ghost', href: memberUrl(), text: 'Member briefing' }),
     el('a', { class: 'btn ghost', href: addUrl(), text: 'Add asks page' }),
-    el('a', { class: 'btn ghost', href: mapUrl(), text: 'System map' }),
+    d.map ? el('a', { class: 'btn ghost', href: mapUrl(), text: 'System map' }) : '',
     d.dashboardUrl ? el('a', { class: 'btn ghost', href: d.dashboardUrl, target: '_blank', rel: 'noopener', text: 'Dashboard' }) : '',
   ]));
   app.replaceChildren(...kids);
@@ -1807,25 +1822,22 @@ function agendaUrl() { return pmUrl() + '&view=agenda'; }
 function postHeight() { try { const h = document.documentElement.scrollHeight; window.top.postMessage({ briefingHeight: h, ccanHeight: h }, '*'); } catch (e) {} }
 try { new ResizeObserver(postHeight).observe(document.body); } catch (e) { setInterval(postHeight, 1000); }
 
-const MAP_TIPS = {
-  min: { h: 'Minutes docs', l: ['Replaces: listening back and typing', 'up the minutes by hand.', 'AI drafts them from the transcript', 'in the usual sections. PM checks.'] },
-  asks: { h: 'Briefings sheet: asks + decisions', l: ['Replaces: copying each ask and', 'decision from the minutes into rows.', 'AI reads the minutes and adds them;', 'PM still confirms before sending.'] },
-  hui: { h: 'Hui tracker', l: ['Replaces: typing in feedback, actions', 'and photo details row by row.', 'AI smart input fills part of it from', 'what is dropped in; people check it.'] },
-  money: { h: '$ tracker', l: ['Replaces: keying in payments and', 'budget lines by hand.', 'AI smart input fills part of it from', 'what is dropped in; people check it.'] },
-  camp: { h: 'Campaigns tracker (AI optional)', l: ['Runs without AI: download the CSV,', 'drop it in the sheet, script sorts it.', 'AI only helps tidy and summarise.'] },
-  annual: { h: 'Annual report (AI optional)', l: ['Runs without AI: the script builds', 'the report from the three trackers.', 'AI only helps keep the wording clean.'] }
-};
-function renderMap(svgText) {
+/* ------------------------------------------------ system map (optional/SystemMap.gs), PM only */
+function renderMap(svgText, tips) {
   app.classList.add('wide');
   const holder = document.createElement('div'); holder.innerHTML = svgText;
-  const svg = holder.firstElementChild;
+  const svg = holder.querySelector('svg');
+  if (!svg) { app.replaceChildren(el('p', { text: 'Map.html has no drawing yet.' })); return; }
   const tip = svg.querySelector('#tip');
   const NS = 'http://www.w3.org/2000/svg';
-  const hide = () => { tip.style.display = 'none'; };
+  const vb = (svg.getAttribute('viewBox') || '0 0 680 960').split(/\s+/).map(Number);
+  const hide = () => { if (tip) tip.style.display = 'none'; };
   function showTip(g, k) {
-    const tp = MAP_TIPS[k], b = g.getBBox(), w = 252, h = 26 + tp.l.length * 16 + 10;
-    const x = Math.min(Math.max(b.x - 110, 10), 670 - w);
-    let y = b.y + b.height + 8; if (y + h > 960) y = b.y - h - 8;
+    const tp = (tips || {})[k];
+    if (!tp || !tip) return;
+    const b = g.getBBox(), w = 252, h = 26 + tp.l.length * 16 + 10;
+    const x = Math.min(Math.max(b.x - 110, 10), vb[2] - 10 - w);
+    let y = b.y + b.height + 8; if (y + h > vb[3]) y = b.y - h - 8;
     while (tip.firstChild) tip.removeChild(tip.firstChild);
     const r = document.createElementNS(NS, 'rect');
     r.setAttribute('x', x); r.setAttribute('y', y); r.setAttribute('width', w); r.setAttribute('height', h); r.setAttribute('rx', 8); r.setAttribute('class', 'c-purple'); r.setAttribute('stroke-width', '0.5');
@@ -1855,9 +1867,9 @@ function renderMap(svgText) {
     el('section', { class: 'inline' }, [el('a', { class: 'btn ghost', href: pmUrl(), text: 'Back to project-manager view' })])
   );
 }
-function loadMap() { call('pmMap', [PM_KEY], d => renderMap(d.svg)); }
+function loadMap() { call('pmMap', [PM_KEY], d => renderMap(d.svg, d.tips)); }
 
-if (MODE === 'pm' && API && new URLSearchParams(location.search).get('view') === 'agenda') VIEW = 'agenda';
+if (MODE === 'pm' && API && PM_KEY && new URLSearchParams(location.search).get('view') === 'agenda') VIEW = 'agenda';
 if (MODE === 'pm' && VIEW === 'map') loadMap();
 else if (MODE === 'pm' && VIEW === 'agenda') loadAgenda();
 else if (MODE === 'pm') loadPm();
