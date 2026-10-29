@@ -693,7 +693,21 @@ function deckView(cards) {
 
 /* ------------------------------------------------ member pages */
 
-function loadBriefing() { call('getBriefing', [getMe()], d => { data = d; renderMember(); }); }
+let lastShown = false;
+function loadBriefing() {
+  if (!lastShown && VIEW === 'my') { lastShown = true; showLast(); }
+  call('getBriefing', [getMe()], d => { data = d; keepLast(d); renderMember(); });
+}
+// The last briefing is kept on this device (static site only), so the page opens at once next time and then refreshes.
+function keepLast(d) { if (!API || !getMe() || !d || !Array.isArray(d.mine) || !(d.people || []).some(p => p.name === getMe())) return; try { localStorage.setItem(PFX + 'Last', JSON.stringify({ me: getMe(), at: Date.now(), d: d })); } catch (e) {} }
+function showLast() {
+  try {
+    const c = JSON.parse(localStorage.getItem(PFX + 'Last') || 'null');
+    if (!c || c.me !== getMe() || Date.now() - c.at > 14 * 864e5) return;
+    if (c.d.words) WORDS = c.d.words;
+    data = c.d; renderMember();
+  } catch (e) {}
+}
 function renderMember() { applyPrefs(); if (VIEW === 'agenda' && getMe() && CFG.agenda !== false) renderAgendaPage(); else if (VIEW === 'add' && getMe()) renderAdd(); else renderBriefing(); }
 
 function namePicker() {
@@ -752,28 +766,50 @@ function renderBriefing() {
   app.replaceChildren(...kids);
 }
 
+/** Sorted by key, either way round. Items with a blank key (no due date, no area) always go last. */
+function orderBy(list, key, rev) {
+  const idx = new Map(list.map((a, i) => [a, i]));
+  return list.slice().sort((x, y) => {
+    const a = key(x), b = key(y);
+    if (!a !== !b) return a ? -1 : 1;
+    const c = a < b ? -1 : a > b ? 1 : 0;
+    return (rev ? -c : c) || (rev ? idx.get(y) - idx.get(x) : idx.get(x) - idx.get(y));
+  });
+}
+// The words on the direction button for each sort, first way round then the other.
+const SORT_DIRS = { default: ['Top first', 'Bottom first'], due: ['Soonest first', 'Latest first'], area: ['In order', 'Reversed'], kind: ['In order', 'Reversed'] };
+/** A small button that turns the order round; remembered on this device under PFX + store. */
+function dirButton(sortKey, rev, store, redraw) {
+  const words = SORT_DIRS[sortKey] || SORT_DIRS.default;
+  return el('button', { type: 'button', class: 'switch', title: 'Turn the order round', 'aria-label': 'Order: ' + words[rev ? 1 : 0] + '. Turn it round.',
+    text: (rev ? '↑ ' : '↓ ') + words[rev ? 1 : 0], onclick: () => { try { localStorage.setItem(PFX + store, rev ? '0' : '1'); } catch (e) {} redraw(!rev); } });
+}
+
 let memSort = 'default';
 try { memSort = localStorage.getItem(PFX + 'MemSort') || 'default'; } catch (e) {}
+let memRev = false;
+try { memRev = localStorage.getItem(PFX + 'MemRev') === '1'; } catch (e) {}
 function sortMine(list) {
   const pinFirst = l => l.map((a, i) => [a, i]).sort((x, y) => (y[0].pinned ? 1 : 0) - (x[0].pinned ? 1 : 0) || x[1] - y[1]).map(x => x[0]);
   return pinFirst(sortMineBy(list));
 }
 function sortMineBy(list) {
-  if (memSort === 'default') return list;
-  const idx = new Map(list.map((a, i) => [a, i]));
+  if (memSort === 'default' && !memRev) return list;
   const KO = { grouptask: 0, individual: 1, groupask: 2 };
-  const key = a => memSort === 'due' ? (a.byIso || '9999-99-99')
-    : memSort === 'area' ? String(((data.workstreams || []).indexOf(a.section) + 1 || 999)).padStart(3, '0')
-    : String(KO[a.kind] == null ? 9 : KO[a.kind]);
-  return list.slice().sort((x, y) => { const kx = key(x), ky = key(y); return kx < ky ? -1 : kx > ky ? 1 : idx.get(x) - idx.get(y); });
+  const key = a => memSort === 'due' ? (a.byIso || '')
+    : memSort === 'area' ? ((data.workstreams || []).indexOf(a.section) < 0 ? '' : String((data.workstreams || []).indexOf(a.section)).padStart(3, '0'))
+    : memSort === 'kind' ? String(KO[a.kind] == null ? 9 : KO[a.kind]) : '0';
+  return orderBy(list, key, memRev);
 }
 function sortPicker() {
   const sel = el('select', { id: 'memsort', style: 'font-size:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink)' },
     [['default', 'As listed'], ['due', 'Due date'], ['area', 'Project area'], ['kind', 'Just yours / ask / task']].filter(o => o[0] !== 'area' || hasWs()).map(o => el('option', { value: o[0], text: o[1] })));
   sel.value = memSort;
-  sel.addEventListener('change', () => { memSort = sel.value; try { localStorage.setItem(PFX + 'MemSort', memSort); } catch (e) {} renderMember(); });
+  sel.addEventListener('change', () => { memSort = sel.value; memRev = false; try { localStorage.setItem(PFX + 'MemSort', memSort); localStorage.setItem(PFX + 'MemRev', '0'); } catch (e) {} renderMember(); });
   sel.setAttribute('aria-label', 'Sort by'); sel.title = 'Sort by';
-  return el('label', { class: 'small', for: 'memsort', title: 'Sort by', style: 'display:flex;gap:8px;align-items:center;flex-wrap:wrap' }, [L('sort', tw('lbl_sort', 'Sort by')), sel]);
+  return el('div', { style: 'display:flex;gap:8px 12px;align-items:center;flex-wrap:wrap' }, [
+    el('label', { class: 'small', for: 'memsort', title: 'Sort by', style: 'display:flex;gap:8px;align-items:center;flex-wrap:wrap' }, [L('sort', tw('lbl_sort', 'Sort by')), sel]),
+    dirButton(memSort, memRev, 'MemRev', v => { memRev = v; renderMember(); })]);
 }
 let doneOpen = null; // stays folded or open across re-renders; starts as Settings DONE_FOLDED says
 function renderPart(me) {
@@ -997,13 +1033,14 @@ const editing = {};
 let pmSort = 'default';
 try { pmSort = localStorage.getItem(PFX + 'PmSort') || 'default'; } catch (e) {}
 const SORTS_ALL = [['default', 'As raised'], ['due', 'Due date'], ['area', 'Project area'], ['kind', 'Task / ask / one person']];
+let pmRev = false;
+try { pmRev = localStorage.getItem(PFX + 'PmRev') === '1'; } catch (e) {}
 function sortList(list, d) {
-  const idx = new Map(list.map((a, i) => [a, i]));
   const KO = { grouptask: 0, individual: 1, groupask: 2 };
-  const key = a => pmSort === 'due' ? (a.byIso || '9999-99-99')
-    : pmSort === 'area' ? String(((d.workstreams || []).indexOf(a.section) + 1 || 999)).padStart(3, '0')
-    : pmSort === 'kind' ? String(KO[a.kind] == null ? 9 : KO[a.kind]) : '';
-  return list.slice().sort((x, y) => { const kx = key(x), ky = key(y); return kx < ky ? -1 : kx > ky ? 1 : idx.get(x) - idx.get(y); });
+  const key = a => pmSort === 'due' ? (a.byIso || '')
+    : pmSort === 'area' ? ((d.workstreams || []).indexOf(a.section) < 0 ? '' : String((d.workstreams || []).indexOf(a.section)).padStart(3, '0'))
+    : pmSort === 'kind' ? String(KO[a.kind] == null ? 9 : KO[a.kind]) : '0';
+  return orderBy(list, key, pmRev);
 }
 const pmFold = { brief: false, held: false, watch: false, current: false, backlog: false, done: false, snoozed: false };
 
@@ -1267,6 +1304,67 @@ function briefSection() {
     'The key dates, decisions and notes members see at the top of their page. Read it, correct anything, then publish. A draft stays hidden from members.');
 }
 
+/* ------------------------------------------------ PM: stand-in links (someone else runs the agenda, or the PM view, until a date) */
+let stands = null, standsErr = '', standsLoading = false, standNew = '';
+const standForm = { name: '', until: '', scope: 'agenda' };
+function loadStands() {
+  if (standsLoading) return;
+  standsLoading = true;
+  call('pmStandIns', [PM_KEY], r => { stands = r || []; standsErr = ''; standsLoading = false; renderPm(); },
+    e => { standsLoading = false; stands = []; standsErr = (e && e.message) || 'Could not load the stand-in links.'; renderPm(); });
+}
+const dayWords = k => new Date(k + 'T12:00:00Z').toLocaleDateString('en-NZ', { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' }).replace(',', '');
+function copyBtn(text) {
+  const b = el('button', { class: 'switch', type: 'button', text: 'Copy link' });
+  b.addEventListener('click', () => { try { navigator.clipboard.writeText(text).then(() => { b.textContent = 'Copied ✓'; setTimeout(() => { b.textContent = 'Copy link'; }, 2000); }); } catch (e) { window.prompt('Copy this link', text); } });
+  return b;
+}
+function standInSection() {
+  if (stands === null) loadStands();
+  const live = (stands || []).filter(x => !x.ended);
+  const kids = [];
+  if (standsErr) kids.push(el('div', { class: 'error', role: 'alert', text: standsErr + ' (If this is new, the script may still need redeploying.)' }));
+  live.forEach(x => {
+    const end = el('button', { class: 'switch', type: 'button', text: 'End now' });
+    end.addEventListener('click', () => { if (busy) return; end.textContent = 'Ending…'; call('pmStandInEnd', [PM_KEY, x.key], r => { stands = r; renderPm(); toast('That link no longer works.'); }, e => { renderPm(); fail(e); }); });
+    kids.push(el('div', { class: 'card', style: x.key === standNew ? 'outline:2px solid var(--accent)' : '' }, [
+      el('div', {}, [el('b', { text: x.name }), ' · ' + (x.scope === 'full' ? 'whole PM view' : 'meeting agenda only') + ' · until the end of ' + dayWords(x.until)]),
+      x.key === standNew ? el('p', { class: 'note', text: 'Send this link to them privately (a message or email to them only). It stops working by itself after that day.' }) : '',
+      el('div', { class: 'acts' }, [copyBtn(x.link), end, el('span', { class: 'small', text: 'made by ' + x.by + ' on ' + dayWords(x.made) })]),
+    ]));
+  });
+  const nm = el('input', { id: 'si-name', type: 'text', maxlength: '60', list: 'si-people', placeholder: 'Their name', value: standForm.name, style: 'width:100%;font-size:inherit;padding:9px 10px;border:1px solid var(--line);border-radius:6px;background:var(--ground);color:var(--ink)' });
+  nm.addEventListener('input', () => { standForm.name = nm.value; });
+  const people = el('datalist', { id: 'si-people' }, ((data && data.people) || []).map(p => el('option', { value: p.display || p.name })));
+  const inAWeek = new Date(Date.now() + 7 * 864e5).toISOString().slice(0, 10);
+  const until = el('input', { id: 'si-until', type: 'date', value: standForm.until || inAWeek, min: new Date().toISOString().slice(0, 10) });
+  until.addEventListener('change', () => { standForm.until = until.value; });
+  const scopeBtn = (v, label) => el('label', { class: 'small', style: 'display:flex;gap:8px;align-items:center' }, [
+    (() => { const i = el('input', { type: 'radio', name: 'si-scope', value: v }); i.checked = standForm.scope === v; i.addEventListener('change', () => { standForm.scope = v; }); return i; })(), label]);
+  const make = el('button', { class: 'btn', type: 'button', text: 'Make the link' });
+  make.addEventListener('click', () => {
+    if (busy) return;
+    if (!nm.value.trim()) { nm.focus(); return; }
+    make.disabled = true; make.textContent = 'Making…';
+    call('pmStandInMake', [PM_KEY, nm.value.trim(), until.value, standForm.scope], r => {
+      const before = new Set((stands || []).map(x => x.key));
+      stands = r; const fresh = r.find(x => !before.has(x.key)); standNew = fresh ? fresh.key : '';
+      standForm.name = ''; standForm.until = ''; renderPm(); toast('Link made. Copy it and send it to them.');
+    }, e => { make.disabled = false; make.textContent = 'Make the link'; fail(e); });
+  });
+  kids.push(el('div', { class: 'addrow' }, [
+    el('div', { class: 'field' }, [el('label', { for: 'si-name', text: 'Who stands in' }), nm, people]),
+    el('div', { class: 'field' }, [el('label', { for: 'si-until', text: 'Last day it works' }), until]),
+    el('div', { class: 'field' }, [el('span', { class: 'lab', text: 'What they can do' }),
+      el('div', { style: 'display:grid;gap:6px' }, [
+        scopeBtn('agenda', 'Run the meeting agenda (chair, apologies, add items, publish)'),
+        scopeBtn('full', 'The whole PM view as well (review, confirm and edit asks)')])]),
+    el('div', { class: 'acts' }, [make]),
+  ]));
+  return foldSection('standin', 'Stand-in for a meeting', stands === null ? '…' : live.length, kids,
+    'Hand your PM role over for a while, for example when someone else chairs a meeting. They get their own private link that ends by itself; you can end it sooner here. What they do is recorded under their name with “(stand-in)”. Stand-ins can’t make links themselves.');
+}
+
 function renderPm() {
   const d = data;
   const kids = [el('header', {}, [el('div', { class: 'eyebrow', text: ORG + ' · project-manager view' + (d.me ? ' · ' + d.me : '') }), el('h1', {}, ['Where things ', el('em', { text: 'stand' })])])];
@@ -1277,8 +1375,9 @@ function renderPm() {
     el('label', { class: 'small', for: 'pmsort', title: 'Sort each list by', style: 'display:flex;gap:8px;align-items:center;flex-wrap:wrap' }, [L('sort', tw('lbl_sort', 'Sort by')),
       (() => { const sel = el('select', { id: 'pmsort', 'aria-label': 'Sort each list by', style: 'font-size:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink)' }, SORTS_ALL.filter(o => o[0] !== 'area' || hasWs()).map(o => el('option', { value: o[0], text: o[1] })));
         sel.value = pmSort;
-        sel.addEventListener('change', () => { pmSort = sel.value; try { localStorage.setItem(PFX + 'PmSort', pmSort); } catch (e) {} renderPm(); });
-        return sel; })()]),
+        sel.addEventListener('change', () => { pmSort = sel.value; pmRev = false; try { localStorage.setItem(PFX + 'PmSort', pmSort); localStorage.setItem(PFX + 'PmRev', '0'); } catch (e) {} renderPm(); });
+        return sel; })(),
+      dirButton(pmSort, pmRev, 'PmRev', v => { pmRev = v; renderPm(); })]),
   ]));
 
   if (d.held && d.held.length) {
@@ -1363,6 +1462,7 @@ function renderPm() {
   }
 
   kids.push(briefSection());
+  if (d.standInOn && !d.standIn) kids.push(standInSection());
 
   // To review: nudges first (outlined), then asks to check. Tick "Ready" on each checked ask, then publish the lot in one go.
   const nudged = sortList(d.list.filter(a => a.nudging && a.bucket !== 'done'), d);
