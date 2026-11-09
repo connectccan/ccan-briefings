@@ -223,6 +223,7 @@ pre.copy { margin: 0; white-space: pre-wrap; font-family: var(--f-body); font-si
 .modal .linkline { font-size: calc(13px * var(--s)); overflow-wrap: anywhere; text-align: center; margin: 0; color: var(--muted); }
 .modal .app-note { background: var(--accent-soft); border-radius: 8px; padding: 12px 14px; font-size: calc(14px * var(--s)); display: grid; gap: 6px; }
 .modal .app-note ol { margin: 0; padding-left: 20px; display: grid; gap: 4px; }
+.modal textarea { width: 100%; font-size: calc(15px * var(--s)); padding: 9px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--ground); color: var(--ink); }
 .modal .row { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; }
 
 /* one-card-at-a-time deck */
@@ -371,6 +372,7 @@ const app = document.getElementById('app');
 let data = null;
 let busy = false;
 let teamFor = null;
+let queryFor = null;   // the Unsure? box is open on this ask
 let suggestFor = null;
 let suggestPick = [];
 let suggestNote = '';
@@ -500,6 +502,7 @@ const ICONS = {
   info: '<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 7.6v.01"/>',
   pencil: '<path d="M4 20h4L19.5 8.5a2.1 2.1 0 0 0-3-3L5 17z"/><path d="M14.5 7.5l3 3"/>',
   link: '<path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1"/><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1"/>',
+  feedback: '<path d="M4 5h16v11H9l-5 4z"/><path d="M12 8.5v3.2M12 13.7v.01"/>',
   hourglass: '<path d="M6 3h12M6 21h12M7 3c0 5 5 6 5 9s-5 4-5 9M17 3c0 5-5 6-5 9s5 4 5 9"/>',
 };
 function person_(cx, r, ul) {
@@ -564,12 +567,51 @@ function drawTools() {
     el("button", { type: "button", text: "A+", "aria-label": "Larger text", title: "Larger text", disabled: i === SIZES.length - 1, onclick: () => stepSize(1) }),
     el("button", { type: "button", "aria-label": isDark() ? "Switch to day mode" : "Switch to night mode", title: isDark() ? "Day mode" : "Night mode", onclick: () => { prefs.theme = isDark() ? "light" : "dark"; applyPrefs(); } }, [L(isDark() ? "sun" : "moon", isDark() ? tw("lbl_day", "Day") : tw("lbl_night", "Night"))]),
     el("button", { type: "button", "aria-label": labelMode === "icons" ? "Show words instead of icons" : "Show icons instead of words", title: labelMode === "icons" ? tw("lbl_words", "Words") : tw("lbl_icons", "Icons"), onclick: () => setLabelMode(labelMode === "icons" ? "words" : "icons") }, [labelMode === "icons" ? ico("words") : tw("lbl_icons", "Icons")]),
-    el("button", { type: "button", "aria-label": "Share this page: show a QR code", title: "Share this page", onclick: openShare }, [L("qr", tw("lbl_share", "Share"))])
+    el("button", { type: "button", "aria-label": "Share this page: show a QR code", title: "Share this page", onclick: openShare }, [L("qr", tw("lbl_share", "Share"))]),
+    el("button", { type: "button", "aria-label": "Report a problem or suggest a change", title: tw("lbl_feedback", "Feedback"), onclick: openFeedback }, [L("feedback", tw("lbl_feedback", "Feedback"))])
   );
 }
 applyPrefs();
 applyLabels();
 
+
+/* ------------------------------------------------ feedback */
+/** A small box: what kind of note, a few words, Send. It lands in the Feedback tab and in the PM view. If FEEDBACK_EMAIL is set it also offers an email link. */
+function openFeedback() {
+  if (document.getElementById('fb-modal')) return;
+  let kind = 'bug';
+  const prevFocus = document.activeElement;
+  const close = () => { back.remove(); document.removeEventListener('keydown', onKey); if (prevFocus && prevFocus.focus) prevFocus.focus(); };
+  const onKey = e => { if (e.key === 'Escape') close(); };
+  const kinds = [['bug', tw('fb_t_bug', 'Something’s wrong')], ['idea', tw('fb_t_idea', 'An idea')], ['other', tw('fb_t_other', 'Something else')]];
+  const toggles = kinds.map(k => el('button', { type: 'button', text: k[1], 'aria-pressed': k[0] === kind ? 'true' : 'false', onclick: () => {
+    kind = k[0]; toggles.forEach((b, i) => b.setAttribute('aria-pressed', kinds[i][0] === kind ? 'true' : 'false'));
+  } }));
+  const note = el('textarea', { id: 'fb-note', rows: 4, maxlength: '1000', placeholder: tw('fb_placeholder', 'What happened, or what would help?'), 'aria-label': tw('fb_placeholder', 'What happened, or what would help?') });
+  const pageName = MODE === 'pm' ? 'PM view' : VIEW === 'add' ? 'Add asks' : VIEW === 'agenda' ? 'Agenda' : 'My asks';
+  const send = el('button', { class: 'btn', type: 'button', text: tw('fb_send', 'Send') });
+  send.addEventListener('click', () => {
+    if (!note.value.trim()) { note.focus(); return; }
+    if (busy) return;
+    send.disabled = true; send.textContent = tw('saving', 'Saving…');
+    call('sendFeedback', [getMe(), kind, note.value, pageName], () => { close(); toast(tw('fb_thanks', 'Thank you, that has been sent.')); },
+      e => { send.disabled = false; send.textContent = tw('fb_send', 'Send'); fail(e); });
+  });
+  const to = (data && data.feedbackEmail) || '';
+  const mail = to ? el('a', { class: 'small', href: 'mailto:' + to + '?subject=' + encodeURIComponent(ORG + ' app feedback') + '&body=' + encodeURIComponent('(' + pageName + ')\n\n'), text: tw('fb_email', 'Or email it instead') }) : '';
+  const box = el('div', { class: 'modal', role: 'dialog', 'aria-modal': 'true', 'aria-labelledby': 'fb-h' }, [
+    el('h2', { id: 'fb-h', text: tw('fb_h', 'Tell us about this app') }),
+    el('p', { class: 'small', style: 'margin:0', text: tw('fb_hint', 'Something not working, or an idea to make it better? One line is plenty.') }),
+    el('div', { class: 'toggle', role: 'group', 'aria-label': 'What kind of note', style: 'justify-self:start;flex-wrap:wrap' }, toggles),
+    note,
+    el('div', { class: 'row' }, [send, el('button', { class: 'switch', type: 'button', text: 'Cancel', onclick: close })]),
+    mail ? el('div', { class: 'row' }, [mail]) : '',
+  ]);
+  const back = el('div', { class: 'modal-back', id: 'fb-modal', onclick: e => { if (e.target === back) close(); } }, [box]);
+  document.body.append(back);
+  document.addEventListener('keydown', onKey);
+  note.focus();
+}
 
 /* ------------------------------------------------ share (QR) */
 /** Where the members' page lives: the static site's root, or the Apps Script web app address. */
@@ -811,6 +853,7 @@ function sortPicker() {
     el('label', { class: 'small', for: 'memsort', title: 'Sort by', style: 'display:flex;gap:8px;align-items:center;flex-wrap:wrap' }, [L('sort', tw('lbl_sort', 'Sort by')), sel]),
     dirButton(memSort, memRev, 'MemRev', v => { memRev = v; renderMember(); })]);
 }
+let teamOpen = true; // the "On it" box
 let doneOpen = null; // stays folded or open across re-renders; starts as Settings DONE_FOLDED says
 function renderPart(me) {
   const mine = sortMine(data.mine);
@@ -833,12 +876,33 @@ function renderPart(me) {
       el('button', { type: 'button', text: t('btn_done'), onclick: e => send(a.id, 'done', '', e.currentTarget) }),
       el('button', { type: 'button', text: t('btn_team'), onclick: () => { teamFor = a.id; renderMember(); } }),
       el('button', { type: 'button', text: t('btn_cant'), onclick: e => send(a.id, 'cant', '', e.currentTarget) }),
-      withQuery ? el('button', { type: 'button', class: 'ghosty', text: t('btn_query'), title: t('query_tip'), onclick: e => send(a.id, 'query', '', e.currentTarget) }) : '',
+      withQuery ? el('button', { type: 'button', class: 'ghosty', text: t('btn_query'), title: t('query_tip'), onclick: () => { queryFor = a.id; teamFor = null; renderMember(); } }) : '',
     ]);
-    if (a.answer && a.answer.status === 'query' && teamFor !== a.id) {
+    const ansDone = !!(a.answer && (a.answer.status === 'done' || a.answer.status === 'team'));
+    if (a.closed && !ansDone) {
+      // The PMs have said enough people have joined: it sits in Done with a thank-you, whatever the member did or didn't do.
+      tail = el('p', { class: 'note', text: t('closed_note') });
+    } else if (queryFor === a.id && !(a.answer && a.answer.status === 'query')) {
+      // Unsure?: two quick choices (one tap sends it), or a few words of their own.
+      const go = txt => { queryFor = null; send(a.id, 'query', txt); };
+      const inp = el('input', { id: 'q-' + a.id, maxlength: '280', placeholder: t('query_placeholder'), 'aria-label': t('query_placeholder') });
+      tail = el('div', { class: 'stack' }, [
+        el('p', { class: 'small', style: 'margin:0', text: t('query_h') }),
+        el('div', { class: 'resp' }, [
+          el('button', { type: 'button', text: t('query_o1'), onclick: () => go(t('query_o1')) }),
+          el('button', { type: 'button', text: t('query_o2'), onclick: () => go(t('query_o2')) }),
+        ]),
+        el('form', { class: 'inline', onsubmit: e => { e.preventDefault(); if (inp.value.trim()) go(inp.value.trim()); else inp.focus(); } }, [
+          inp, el('button', { class: 'switch', type: 'submit', text: t('query_send') }),
+          el('button', { class: 'switch', type: 'button', text: 'Cancel', onclick: () => { queryFor = null; renderMember(); } }),
+        ]),
+      ]);
+      setTimeout(() => { if (document.activeElement === document.body) inp.focus(); }, 0);
+    } else if (a.answer && a.answer.status === 'query' && teamFor !== a.id) {
       // Stays in the list until a PM has checked it; they can still answer once it's clear.
       tail = el('div', { class: 'stack' }, [
         el('div', { class: 'answered' }, [chip('query'), el('span', { class: 'small', text: t('query_note') })]),
+        a.answer.note ? el('p', { class: 'small', style: 'margin:0', text: t('query_you_said', { note: a.answer.note }) }) : '',
         buttons(false),
       ]);
     } else if (a.answer && a.answer.status !== 'open' && a.answer.status !== 'query') {
@@ -871,15 +935,21 @@ function renderPart(me) {
       extras(a),
     ]);
   });
-  // Finished asks (done, or can't this month) leave the deck/list and sit under a "Done" heading.
-  const isDone = a => !!(a.answer && (a.answer.status === 'done' || a.answer.status === 'cant'));
-  const openCards = cards.filter((_, i) => !isDone(mine[i]));
+  // Done asks sit under a "Done" heading and "my team's on it" under "On it" (both leave the deck/list). Can't leaves the list altogether until a PM sends it back.
+  const isTeam = a => !!(a.answer && a.answer.status === 'team');
+  const isDone = a => !!(a.answer && a.answer.status === 'done') || (a.closed && !isTeam(a));   // closed = the PMs said "that's enough", so it moves to Done even if they never answered
+  const openCards = cards.filter((_, i) => !isDone(mine[i]) && !isTeam(mine[i]));
+  const teamCards = cards.filter((_, i) => isTeam(mine[i]));
   const doneCards = cards.filter((_, i) => isDone(mine[i]));
   const kids = [head, el('div', { class: 'view-row' }, [sortPicker(), viewToggle()])];
   if (openCards.length) kids.push(deckMode ? deckView(openCards) : el('div', { class: 'stack', style: 'gap:14px' }, openCards));
   else kids.push(el('p', { class: 'none', style: 'margin:0', text: t('none_for_you') }));
   const sections = [el('section', { class: 'part' }, kids)];
   if (doneOpen === null) doneOpen = !data.doneFolded;
+  if (teamCards.length) sections.push(el('details', { class: 'fold', open: teamOpen, ontoggle: e => { teamOpen = e.currentTarget.open; } }, [
+    el('summary', {}, [el('h2', { text: tw('lbl_onit', 'On it') }), el('span', { class: 'cnt', text: String(teamCards.length) })]),
+    el('div', { class: 'stack', style: 'gap:14px;margin-top:14px' }, teamCards),
+  ]));
   if (doneCards.length) sections.push(el('details', { class: 'fold', open: doneOpen, ontoggle: e => { doneOpen = e.currentTarget.open; } }, [
     el('summary', {}, [el('h2', { text: 'Done' }), el('span', { class: 'cnt', text: String(doneCards.length) })]),
     el('div', { class: 'stack', style: 'gap:14px;margin-top:14px' }, doneCards),
@@ -931,12 +1001,47 @@ function extras(a) {
   return kids.length || box.length ? el('div', { class: 'stack' }, [kids.length ? el('div', { class: 'extras' }, kids) : '', ...box]) : '';
 }
 
+// A tap shows at once. The answer is saved in the background (one at a time, in order), then the page quietly re-reads itself
+// and the tracker icon is updated (dashSync). If a save fails the page says so and goes back to what the sheet really holds.
+const ansQ = [];
+let ansRun = false, refreshSeq = 0;
+function applyLocal(id, status, note) {
+  const list = (data && data.mine) || [];
+  const i = list.findIndex(x => x.id === id);
+  if (i < 0) return;
+  const it = list[i];
+  if (status === 'cant') { list.splice(i, 1); return; }   // Can't leaves the member's list, as on the server
+  it.answer = status === 'open' ? null : { status: status, by: getMe(), note: note || '' };
+  if (status === 'done' || status === 'team') it.pinned = false;
+  (it.others || []).forEach(o => { if (o.me) o.state = status === 'done' || status === 'team' ? status : 'open'; });
+}
+function ansPump() {
+  if (ansRun || !ansQ.length) return;
+  ansRun = true;
+  const args = ansQ.shift();
+  const next = failed => {
+    ansRun = false;
+    if (failed) toast('Could not save that one. Check your connection.');
+    if (ansQ.length) ansPump(); else { qcall('dashSync', [], null, () => {}); refreshQuiet(); }
+  };
+  qcall('answer', args, () => next(false), () => next(true));
+}
+/** Re-read the page data without a loading pill. Skipped if a newer tap is still saving, and only the latest reply is used. */
+function refreshQuiet() {
+  const seq = ++refreshSeq;
+  qcall('getBriefing', [getMe()], d => {
+    if (seq !== refreshSeq || ansRun || ansQ.length) return;
+    data = d; keepLast(d);
+    if (VIEW === 'my' && !teamFor && !queryFor && !suggestFor && !busy) renderMember();
+  }, () => {});
+}
 function send(id, status, note, btn) {
   if (busy) return;
-  app.querySelectorAll('.resp button').forEach(b => { b.disabled = true; });
-  if (btn) btn.textContent = t('saving');
-  call('answer', [id, getMe(), status, note], d => { data = d; renderMember(); toast(status === 'open' ? t('toast_cleared') : status === 'query' ? t('toast_query') : t('toast_saved')); },
-    e => { renderMember(); fail(e); });
+  applyLocal(id, status, note);
+  renderMember();
+  toast(status === 'open' ? t('toast_cleared') : status === 'query' ? t('toast_query') : t('toast_saved'));
+  ansQ.push([id, getMe(), status, note, true]);
+  ansPump();
 }
 
 /* ------------------------------------------------ Add asks page */
@@ -1005,10 +1110,12 @@ function renderAdd() {
     const rows = addRows.filter(r => r.text.trim() || r.who.length).map(r => ({ who: r.who, text: r.text, by: r.by, kind: r.kind, workstream: r.ws, link: r.link, linkText: r.linkText }));
     if (!rows.length) { fail(new Error('Nothing to save yet.')); return; }
     saveBtn.disabled = true; saveBtn.textContent = t('saving');
-    call('addAsks', [getMe(), rows, addWhen, addReview], r => {
+    call('addAsks', [getMe(), rows, addWhen, addReview, true], r => {
       addRows = [blankRow()];
       toast(t('add_saved'));
-      call('getBriefing', [getMe()], d => { data = d; renderAdd(); });
+      renderAdd();
+      qcall('dashSync', [], null, () => {});   // the tracker is updated in the background, nobody waits for it
+      refreshQuiet();
     }, e => { saveBtn.disabled = false; saveBtn.textContent = t('add_save'); fail(e); });
   } });
   kids.push(el('section', { class: 'addrow' }, [
@@ -1030,6 +1137,8 @@ function loadPm() { call('getPm', [PM_KEY], d => { data = d; renderPm(); }); }
 const collectors = {};
 const readySet = {};
 const editing = {};
+const queryEditing = {};   // Unsure? cards being edited in place (key: ask id | person)
+const queryReply = {};     // the PM's reply typed so far (same key)
 let pmSort = 'default';
 try { pmSort = localStorage.getItem(PFX + 'PmSort') || 'default'; } catch (e) {}
 const SORTS_ALL = [['default', 'As raised'], ['due', 'Due date'], ['area', 'Project area'], ['kind', 'Task / ask / one person']];
@@ -1080,7 +1189,7 @@ function pmEditCard(x, d, opts) {
     ok.addEventListener('click', () => {
       if (busy) return;
       all.forEach(b => { b.disabled = true; }); ok.textContent = 'Saving…';
-      call('pmConfirm', [PM_KEY, x.id].concat(args()), r => { delete editing[x.id]; data = r; renderPm(); toast(opts.okToast); },
+      call('pmConfirm', [PM_KEY, x.id].concat(args()), r => { if (opts.after) { opts.after(r); return; } delete editing[x.id]; data = r; renderPm(); toast(opts.okToast); },
         e => { all.forEach(b => { b.disabled = false; }); ok.textContent = opts.okLabel; fail(e); });
     });
   }
@@ -1165,6 +1274,7 @@ function pmAskCard(a, d) {
     // Review box (a nudge): look at it, then pin it, watch it or send it back. Watch list: pin it or send it back.
     if (!a.nudging && !a.watching) acts.push(el('button', { class: 'switch', type: 'button', text: 'Add to nudges', onclick: () => act('pmNudge', [a.id, true], 'Added. It now shows in your review box.') }));
     if (a.nudging) acts.push(el('button', { class: 'btn', type: 'button', text: 'Move to watch list', onclick: () => act('pmWatch', [a.id, true], 'On the watch list.') }));
+    acts.push(el('button', { class: 'switch', type: 'button', text: 'Snooze to next meeting', onclick: () => { if (!d.snoozeDefault) { fail(new Error('No upcoming meeting on the tracker. Use the date picker on a Can’t card, or add the meeting first.')); return; } act('pmHold', [a.id, 'snooze', d.snoozeDefault], 'Snoozed. It comes back in Current after the next meeting.'); } }));
     if (a.nudging || a.watching) acts.push(el('button', { class: 'switch', type: 'button', text: 'Return to ' + a.home, onclick: () => act(a.watching ? 'pmWatch' : 'pmNudge', [a.id, false], 'Back in ' + a.home + '. It comes back for a nudge on its due date.') }));
     if (d.pins) acts.push(el('button', { class: 'switch', type: 'button', text: a.pinned ? 'Unpin from their list' : 'Pin to the top of their list', onclick: () => act('pmPin', [a.id, !a.pinned], a.pinned ? 'Unpinned.' : 'Bold and first in their list until they answer.') }));
   }
@@ -1369,8 +1479,6 @@ function renderPm() {
   const d = data;
   const kids = [el('header', {}, [el('div', { class: 'eyebrow', text: ORG + ' · project-manager view' + (d.me ? ' · ' + d.me : '') }), el('h1', {}, ['Where things ', el('em', { text: 'stand' })])])];
   if (CFG.agenda !== false) kids.push(el('section', { class: 'inline' }, [el('a', { class: 'btn', href: agendaUrl(), text: 'Meeting agenda' })]));
-  kids.push(el('div', { class: 'stats' }, [['Done', d.stats.done], ['In progress', d.stats.team], [t('pm_cant_stat'), d.stats.cant], ['With you to check', d.stats.query], ['No answer yet', d.stats.open]]
-    .map(([l, n]) => el('div', { class: 'stat' }, [el('b', { text: String(n) }), el('span', { text: l })]))));
   kids.push(el('div', { class: 'stack' }, [
     el('label', { class: 'small', for: 'pmsort', title: 'Sort each list by', style: 'display:flex;gap:8px;align-items:center;flex-wrap:wrap' }, [L('sort', tw('lbl_sort', 'Sort by')),
       (() => { const sel = el('select', { id: 'pmsort', 'aria-label': 'Sort each list by', style: 'font-size:inherit;padding:6px 8px;border:1px solid var(--line);border-radius:6px;background:var(--paper);color:var(--ink)' }, SORTS_ALL.filter(o => o[0] !== 'area' || hasWs()).map(o => el('option', { value: o[0], text: o[1] })));
@@ -1379,6 +1487,21 @@ function renderPm() {
         return sel; })(),
       dirButton(pmSort, pmRev, 'PmRev', v => { pmRev = v; renderPm(); })]),
   ]));
+
+  if (d.feedback && d.feedback.length) {
+    const fc = el('section', { class: 'card' }, [el('h2', { text: 'Feedback on the app (' + d.feedback.length + ')' }),
+      el('p', { class: 'small', style: 'margin:0', text: 'Problems and ideas from the Feedback button. Mark each one handled when you have dealt with it.' })]);
+    d.feedback.forEach(x => {
+      const done = el('button', { class: 'btn', type: 'button', text: 'Mark as handled' });
+      done.addEventListener('click', () => { if (busy) return; done.disabled = true; done.textContent = 'Saving…'; call('pmFeedbackDone', [PM_KEY, x.row], r => { data = r; renderPm(); toast('Marked as handled.'); }, e => { renderPm(); fail(e); }); });
+      fc.append(el('div', { class: 'q' }, [
+        el('div', { class: 'small', text: ({ bug: 'Something’s wrong', idea: 'An idea', other: 'Something else' })[x.type] + ' · ' + x.from + (x.page ? ' · ' + x.page : '') + (x.when ? ' · ' + x.when : '') }),
+        el('div', { text: x.note }),
+        el('div', { class: 'inline' }, [done]),
+      ]));
+    });
+    kids.push(fc);
+  }
 
   if (d.held && d.held.length) {
     const hc = el('section', { class: 'card' }, [el('h2', { text: 'Held back from the meeting (' + d.held.length + ')' }), el('p', { class: 'small', style: 'margin:0', text: 'Notes written on open tasks. If a note means an ask should change, edit the ask below, then tick Checked.' })]);
@@ -1390,18 +1513,43 @@ function renderPm() {
     kids.push(hc);
   }
   if (d.queries.length) {
-    const qc = el('section', { class: 'card' }, [el('h2', { text: '“Not for me?” to check (' + d.queries.length + ')' })]);
+    const qc = el('section', { class: 'card' }, [el('h2', { text: '“Unsure?” to check (' + d.queries.length + ')' }),
+      el('p', { class: 'small', style: 'margin:0', text: 'A member does not understand the task, or thinks it is not for them. Reply (or edit the ask) and send it back, or take them off it.' })]);
     d.queries.forEach(x => {
-      const off = el('button', { class: 'btn', type: 'button', text: 'Take ' + x.scope + ' off this' });
-      const keep = el('button', { class: 'switch', type: 'button', text: 'It is theirs (I’ll explain)' });
-      const lock = b => { if (busy) return false; off.disabled = true; keep.disabled = true; b.textContent = 'Saving…'; return true; };
-      const unlock = e => { off.disabled = false; keep.disabled = false; off.textContent = 'Take ' + x.scope + ' off this'; keep.textContent = 'It is theirs (I’ll explain)'; fail(e); };
-      off.addEventListener('click', () => { if (lock(off)) call('pmRemoveOwner', [PM_KEY, x.id, x.scope], r => { data = r; renderPm(); toast('Removed from their list.'); }, unlock); });
-      keep.addEventListener('click', () => { if (lock(keep)) call('pmKeep', [PM_KEY, x.id, x.scope, ''], r => { data = r; renderPm(); toast('Back on their list with a note.'); }, unlock); });
+      const qkey = x.id + '|' + x.scope;
+      const reply = el('textarea', { rows: 2, placeholder: 'Your reply to ' + (x.byName || x.scope) + ' (optional)', 'aria-label': 'Your reply' });
+      reply.value = queryReply[qkey] || '';
+      reply.addEventListener('input', () => { queryReply[qkey] = reply.value; });
+      const off = el('button', { class: 'switch', type: 'button', text: 'Take ' + x.scope + ' off this' });
+      const keep = el('button', { class: 'btn', type: 'button', text: 'Send it back to ' + (x.byName || x.scope) });
+      const edit = el('button', { class: 'btn ghost', type: 'button', 'aria-label': 'Edit the ask first', title: 'Edit the ask first', onclick: () => { queryEditing[qkey] = true; renderPm(); } }, [L('pencil', tw('lbl_edit', 'Edit'))]);
+      const all = [off, keep, edit];
+      const lock = b => { if (busy) return false; all.forEach(c => { c.disabled = true; }); b.textContent = 'Saving…'; return true; };
+      const unlock = e => { renderPm(); fail(e); };
+      off.addEventListener('click', () => { if (lock(off)) call('pmRemoveOwner', [PM_KEY, x.id, x.scope], r => { delete queryReply[qkey]; data = r; renderPm(); toast('Removed from their list.'); }, unlock); });
+      keep.addEventListener('click', () => { if (lock(keep)) call('pmKeep', [PM_KEY, x.id, x.scope, reply.value.trim()], r => { delete queryReply[qkey]; data = r; renderPm(); toast('Sent back to them' + (reply.value.trim() ? ' with your reply.' : '.')); }, unlock); });
+      if (queryEditing[qkey]) {
+        // Edit the ask here, then it goes back to the member with the reply (or a plain "checked" note).
+        qc.append(el('div', {}, [
+          el('div', { class: 'small', text: x.byName ? x.byName + ' said: “' + (x.note || 'unsure') + '”' : '' }),
+          pmEditCard(x.edit, d, {
+            okLabel: 'Save and send it back', dropLabel: 'Remove the ask completely', onCancel: () => { delete queryEditing[qkey]; renderPm(); },
+            after: r => {
+              const still = (r.queries || []).some(q => q.id === x.id && q.scope === x.scope);
+              if (!still) { delete queryEditing[qkey]; data = r; renderPm(); toast('Saved.'); return; }
+              call('pmKeep', [PM_KEY, x.id, x.scope, (queryReply[qkey] || '').trim() || 'I’ve updated the ask.'], r2 => { delete queryEditing[qkey]; delete queryReply[qkey]; data = r2; renderPm(); toast('Saved and sent back.'); }, e => { data = r; renderPm(); fail(e); });
+            },
+          }),
+          el('div', { class: 'q' }, [el('label', { text: 'Your reply (optional)' }), reply]),
+        ]));
+        return;
+      }
       qc.append(el('div', { class: 'q' }, [
         el('div', { class: 'small', text: x.source + ' · asked by ' + x.by + (x.by !== x.scope ? ' for ' + x.scope : '') }),
         el('div', { text: x.ask }),
-        el('div', { class: 'inline' }, [off, keep]),
+        el('div', { class: 'note', style: 'margin:0', text: (x.byName || x.scope) + ' says: “' + (x.note || 'Unsure') + '”' }),
+        reply,
+        el('div', { class: 'inline' }, [keep, edit, off]),
       ]));
     });
     kids.push(qc);
@@ -1410,11 +1558,12 @@ function renderPm() {
   if (d.suggestions.length) {
     const sc = el('section', { class: 'card' }, [el('h2', { text: 'Suggestions to extend an ask (' + d.suggestions.length + ')' })]);
     d.suggestions.forEach(x => {
-      const add = el('button', { class: 'btn', type: 'button', text: x.add ? 'Add ' + x.add : 'Add them', disabled: !x.add });
+      // With names: Add them. A note with no names has no one to add, so the first button just marks it as handled (never a dead button).
+      const add = el('button', { class: 'btn', type: 'button', text: x.add ? 'Add ' + x.add : 'Mark as handled' });
       const no = el('button', { class: 'switch', type: 'button', text: 'Decline' });
       const act = (b, action, msg) => { if (busy) return; add.disabled = true; no.disabled = true; b.textContent = 'Saving…';
         call('pmSuggestion', [PM_KEY, x.row, action], r => { data = r; renderPm(); toast(msg); }, e => { renderPm(); fail(e); }); };
-      add.addEventListener('click', () => act(add, 'add', 'Added to the ask.'));
+      add.addEventListener('click', () => (x.add ? act(add, 'add', 'Added to the ask.') : act(add, 'handled', 'Marked as handled.')));
       no.addEventListener('click', () => act(no, 'decline', 'Declined.'));
       sc.append(el('div', { class: 'q' }, [
         el('div', { class: 'small', text: x.by + ' suggests extending this ask (currently for ' + (x.forText || '—') + ')' }),
@@ -1478,7 +1627,7 @@ function renderPm() {
 
   if (d.cants.length) {
     const cc = el('section', { class: 'card' }, [el('h2', { text: t('pm_cants_h') + ' (' + d.cants.length + ')' }),
-      el('p', { class: 'small', style: 'margin:0', text: 'Ask again keeps it on their list for the next meeting. Snooze hides it from you until the date you pick. ' + (d.backburner ? 'Back burner counts it as done for now, so you can pull it back later. ' : '') + 'Drop records it as dropped on the dashboard and takes it off everyone’s list.' })]);
+      el('p', { class: 'small', style: 'margin:0', text: 'Their Can’t has taken it off their list. Ask again puts it back on their list now. Snooze keeps it off their list and off yours until the date you pick (next meeting by default), then it returns in Current. ' + (d.backburner ? 'Back burner counts it as done for now, so you can pull it back later. ' : '') + 'Drop records it as dropped on the dashboard and takes it off everyone’s list.' })]);
     d.cants.forEach(x => {
       const again = el('button', { class: 'btn', type: 'button', text: t('pm_again') });
       const snooze = el('button', { class: 'btn ghost', type: 'button', text: 'Snooze until' });
@@ -1512,8 +1661,8 @@ function renderPm() {
   kids.push(foldSection('backlog', 'Backlog asks', back.length, back.length ? back.map(a => pmAskCard(a, d)) : [none('Nothing is hanging over from earlier meetings.')],
     d.hasBacklogRow ? 'Still open from earlier meetings. They are listed in the BACKLOG row for ' + (d.nextMeeting || 'the next meeting') + '. “Put on the next agenda” adds a copy to that meeting, marked as a nudge.' : d.dashOn ? 'Add a row labelled “BACKLOG (still open)” at the bottom of the ' + d.trackerTab + ' tab and these will be listed there for the next meeting.' : 'Still open from earlier meetings.'));
   kids.push(foldSection('done', 'Done', dn.length, dn.length ? dn.map(a => pmAskCard(a, d)) : [none('Nothing finished yet.')],
-    'Finished asks and tasks, plus anything dropped or on the back burner (marked on the card). You can still edit or bring any of them back.'));
-  if (snz.length) kids.push(foldSection('snoozed', 'Snoozed', snz.length, snz.map(a => pmAskCard(a, d)), 'Hidden from your lists until the date shown, then they come back on their own.'));
+    'Finished asks and tasks, plus anything dropped or on the back burner (marked on the card). Finished ones leave this list once the next meeting after they were finished has passed. You can still edit or bring any of them back.'));
+  kids.push(foldSection('snoozed', 'Snoozed', snz.length, snz.length ? snz.map(a => pmAskCard(a, d)) : [none('Nothing snoozed.')], 'Delayed on purpose: overdue asks, “Can’t” answers, anything you chose to put off. Hidden from the member and from your other lists until the date shown, then it comes back into Current for that meeting cycle.'));
 
 
   kids.push(el('section', { class: 'card' }, [el('h2', { text: 'Opener for the next meeting' }), el('pre', { class: 'copy', text: d.opener })]));
@@ -1919,7 +2068,7 @@ function renderAgendaPage() { if (ag) { renderAgenda(); agTick(); } else loadAge
 function agendaUrl() { return pmUrl() + '&view=agenda'; }
 
 // When embedded in your own website, tell the page how tall we are so the frame fits without scrollbars.
-function postHeight() { try { const h = document.documentElement.scrollHeight; window.top.postMessage({ briefingHeight: h, ccanHeight: h }, '*'); } catch (e) {} }
+function postHeight() { try { window.top.postMessage({ briefingHeight: document.documentElement.scrollHeight }, '*'); } catch (e) {} }
 try { new ResizeObserver(postHeight).observe(document.body); } catch (e) { setInterval(postHeight, 1000); }
 
 /* ------------------------------------------------ system map (optional/SystemMap.gs), PM only */
